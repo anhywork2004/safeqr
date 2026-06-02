@@ -1,0 +1,13 @@
+# SafeQR Cloudflare Pages Configuration
+name = "safeqr"
+compatibility_date = "2025-06-01"
+pages_build_output_dir = "."
+
+# D1 Database binding for Pages Functions
+[[d1_databases]]
+binding = "DB"
+database_name = "safeqr-db"
+database_id = "84fdde68-9ad6-4291-a486-bccbed425b3f"
+
+[vars]
+JWT_SECRET = "safeqr-jwt-secret-2026"

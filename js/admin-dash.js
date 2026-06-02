@@ -1,14 +1,6 @@
 var SESSION_KEY = 'safeqr_session';
 var CONTACTS_KEY = 'safeqr_contacts';
 var PASSWORDS_KEY = 'safeqr_passwords';
-var DEFAULT_PASSWORDS = {
-  medical: 'medical2024',
-  fire: 'fire2024',
-  police: 'police2024',
-  electricity: 'electricity2024',
-  water: 'water2024',
-  ward: 'ward2024'
-};
 
 var session = null;
 var currentContact = null;
@@ -119,7 +111,8 @@ function renderPreview() {
 }
 
 // Live preview binding
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  await loadData();
   checkAuth();
   loadDashboard();
 
@@ -135,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ========== SAVE ==========
-function handleSave(e) {
+async function handleSave(e) {
   e.preventDefault();
 
   var phone = document.getElementById('phone').value.trim();
@@ -159,10 +152,35 @@ function handleSave(e) {
   };
   saveContacts(saved);
 
+  // Try API save if available
+  if (session.useApi) {
+    var apiResult = await apiUpdateContact(session.agencyId, {
+      phone: phone,
+      address: address,
+      maps_query: mapsQuery,
+      description: description
+    });
+    if (apiResult) {
+      console.log('API save successful');
+    } else {
+      console.warn('API save failed, saved locally only');
+    }
+  }
+
   if (newPassword) {
     if (newPassword.length < 4) {
       showToast('Mật khẩu phải có ít nhất 4 ký tự', true);
       return;
+    }
+    // Try API password change if available
+    if (session.useApi) {
+      var pwdResult = await apiChangePassword(
+        getPasswords()[session.agencyId] || DEFAULT_PASSWORDS[session.agencyId],
+        newPassword
+      );
+      if (pwdResult && pwdResult.success) {
+        console.log('API password change successful');
+      }
     }
     savePassword(session.agencyId, newPassword);
     document.getElementById('newPassword').value = '';
