@@ -520,34 +520,26 @@ body { max-width: var(--max-width); }
 .card-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-auto-rows: auto;
-  align-items: stretch;
-  gap: 14px;
+  gap: 12px;
 }
-@media (min-width: 500px)  { .card-grid { gap: 18px; } }
-@media (min-width: 768px)  {
-  .card-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-  }
-}
-/* Force exactly 2 rows if 6 items — prevent orphan on 3rd row */
-.card-grid .card:nth-child(n+7) { display: none; }
+@media (min-width: 500px)  { .card-grid { gap: 16px; } }
+@media (min-width: 768px)  { .card-grid { gap: 20px; } }
 
-/* Card — subtle top accent instead of left bar */
+/* Card — compact, clean, top accent bar */
 .card {
   background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 20px 16px;
+  border-radius: var(--radius);
+  padding: 14px 12px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   transition: all var(--ease);
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border-alt);
-  border-top: 3.5px solid var(--card-color, var(--red));
+  border-top: 3px solid var(--card-color, var(--red));
+  min-height: 0;
 }
 
 .card:hover {
@@ -559,60 +551,63 @@ body { max-width: var(--max-width); }
 }
 
 .card-icon {
-  font-size: 2.4rem;
+  font-size: 1.7rem;
   line-height: 1;
 }
 .card-name {
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.2px;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .card-desc {
-  font-size: 0.72rem;
-  color: var(--text-soft);
-  line-height: 1.5;
+  display: none; /* hide on mobile, show on desktop */
 }
 .card-phone {
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 900;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   color: var(--card-color, var(--red));
   font-variant-numeric: tabular-nums;
   font-family: var(--font);
+  line-height: 1.1;
 }
 .card-address {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
-  white-space: pre-line;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 .card-actions {
   display: flex;
-  gap: 9px;
+  flex-direction: column;
+  gap: 5px;
   margin-top: auto;
   padding-top: 4px;
 }
 
-/* Buttons inside cards */
+/* Buttons inside cards — stacked, compact */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 10px 15px;
-  border-radius: 24px;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 20px;
   border: none;
-  font-size: 0.77rem;
+  font-size: 0.7rem;
   font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
   text-decoration: none;
   transition: all var(--ease);
-  flex: 1;
+  width: 100%;
   text-align: center;
   letter-spacing: -0.1px;
+  white-space: nowrap;
 }
 .btn-call {
   background: var(--card-color, var(--red));
@@ -1473,17 +1468,27 @@ body { max-width: var(--max-width); }
    RESPONSIVE — Mobile fine-tuning
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 400px) {
-  .card-grid { gap: 8px; }
-  .card { padding: 12px 10px; gap: 6px; }
-  .card-icon { font-size: 1.8rem; }
-  .card-name { font-size: 0.78rem; }
-  .card-desc { font-size: 0.66rem; }
-  .card-phone { font-size: 1.05rem; }
-  .card-address { font-size: 0.66rem; }
-  .btn { padding: 7px 10px; font-size: 0.68rem; }
+  .card-grid { gap: 6px; }
+  .card { padding: 10px 8px; gap: 4px; }
+  .card-icon { font-size: 1.4rem; }
+  .card-name { font-size: 0.68rem; }
+  .card-phone { font-size: 0.9rem; }
+  .card-address { font-size: 0.6rem; }
+  .btn { padding: 6px 8px; font-size: 0.63rem; border-radius: 16px; }
   .hero-hotlines { gap: 10px; }
   .hotline-btn { min-width: 88px; padding: 14px 16px; }
-  /* JS handles all positioning — see js/app.js setupDraggable */
+}
+
+/* Desktop: restore richer card layout */
+@media (min-width: 768px) {
+  .card { padding: 18px 16px; gap: 8px; border-top-width: 3.5px; }
+  .card-icon { font-size: 2.2rem; }
+  .card-name { font-size: 0.9rem; }
+  .card-desc { display: block; font-size: 0.7rem; }
+  .card-phone { font-size: 1.25rem; }
+  .card-address { font-size: 0.7rem; white-space: pre-line; overflow: visible; }
+  .card-actions { flex-direction: row; gap: 8px; }
+  .btn { width: auto; flex: 1; padding: 9px 14px; font-size: 0.74rem; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -335,10 +335,10 @@ function renderCards() {
       '<div class="card-name">' + c.name + '</div>' +
       '<div class="card-desc">' + c.description + '</div>' +
       '<div class="card-phone">' + escapeHtml(c.phone) + '</div>' +
-      '<div class="card-address">' + escapeHtml(c.address) + '</div>' +
+      '<div class="card-address" title="' + escapeHtml(c.address) + '">' + escapeHtml(c.address) + '</div>' +
       '<div class="card-actions">' +
-        '<button class="btn btn-call" onclick="handleCall(\'' + escapeHtml(c.phone) + '\',\'' + escapeHtml(c.name) + '\',\'' + c.color + '\')">📞 Gọi ngay</button>' +
-        '<button class="btn btn-maps" onclick="openMaps(\'' + escapeHtml(c.mapsQuery) + '\')">🗺 Chỉ đường gần nhất</button>' +
+        '<button class="btn btn-call" onclick="handleCall(\'' + escapeHtml(c.phone) + '\',\'' + escapeHtml(c.name) + '\',\'' + c.color + '\')">📞 Gọi</button>' +
+        '<button class="btn btn-maps" onclick="openMaps(\'' + escapeHtml(c.mapsQuery) + '\')">🗺 Chỉ đường</button>' +
       '</div>' +
     '</div>';
   }).join('');
