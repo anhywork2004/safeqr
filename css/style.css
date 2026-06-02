@@ -515,12 +515,13 @@ body { max-width: var(--max-width); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CARD GRID — 2 rows × 3 columns (6 contacts)
+   CARD GRID — Dynamic columns (JS-controlled, auto-balanced)
    ═══════════════════════════════════════════════════════════════ */
 .card-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr); /* fallback, JS overrides */
   gap: 12px;
+  justify-content: center;
 }
 @media (min-width: 500px)  { .card-grid { gap: 16px; } }
 @media (min-width: 768px)  { .card-grid { gap: 20px; } }
@@ -1500,7 +1501,7 @@ body { max-width: var(--max-width); }
   .accuracy-warning { display: none; }
   body { background: #fff; max-width: 100%; padding: 0; }
   body::before { display: none; }
-  .card-grid { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .card-grid { gap: 8px; }
   .card {
     break-inside: avoid;
     box-shadow: none;

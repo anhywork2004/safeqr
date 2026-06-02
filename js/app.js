@@ -314,6 +314,18 @@ async function initApp() {
   setupDraggableButtons();
   setupSOS();
   setupKeyboard();
+
+  // Re-render grid on resize (column count may change)
+  var _resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(function () {
+      var grid = document.getElementById('cardGrid');
+      var total = getMergedContacts().length;
+      var cols = calcColumns(total, getMaxCols());
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    }, 200);
+  });
 }
 
 function setupKeyboard() {
@@ -326,9 +338,37 @@ function setupKeyboard() {
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+/**
+ * Calculate optimal column count for balanced rows.
+ *  6 → 3+3 (2 rows × 3 cols)    7 → 4+3 (2 rows, first wider)
+ *  8 → 4+4 (2 rows × 4 cols)    9 → 3+3+3 (3 rows × 3 cols)
+ * @param {number} total - Number of cards
+ * @param {number} maxCols - Max columns (based on viewport)
+ * @returns {number} Optimal column count
+ */
+function calcColumns(total, maxCols) {
+  if (total <= 0) return 1;
+  var rows = Math.ceil(total / maxCols);
+  return Math.ceil(total / rows);
+}
+
+function getMaxCols() {
+  var w = window.innerWidth;
+  if (w < 400) return 2;
+  if (w < 600) return 3;
+  return 4;
+}
+
 function renderCards() {
   var contacts = getMergedContacts();
   var grid = document.getElementById('cardGrid');
+  var total = contacts.length;
+  var maxCols = getMaxCols();
+  var cols = calcColumns(total, maxCols);
+
+  // Dynamically set grid columns
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+
   grid.innerHTML = contacts.map(function (c) {
     return '<div class="card" style="--card-color: ' + c.color + '">' +
       '<div class="card-icon">' + c.icon + '</div>' +
