@@ -532,6 +532,205 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   DASHBOARD — Wide layout + Contact List
+   ═══════════════════════════════════════════════════════════════ */
+.dash-main-wide {
+  padding: 24px 20px;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.dash-card-full { width: 100%; }
+.dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.dash-card-header h2 { margin: 0; }
+.btn-add-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 18px;
+  border-radius: 22px;
+  border: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--ease);
+}
+.btn-add-contact:hover { background: var(--red-dark); }
+.btn-add-contact:active { transform: scale(0.96); }
+
+/* ── Contact List ── */
+.contact-list { margin-top: 16px; }
+.contact-list-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-hint);
+  font-size: 0.85rem;
+}
+
+.contact-section {
+  margin-bottom: 20px;
+}
+.contact-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border-alt);
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  transition: all var(--ease);
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+}
+.contact-row:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.contact-global {
+  opacity: 0.75;
+  background: #fafaf8;
+}
+.contact-local {
+  border-left: 3px solid var(--red);
+}
+
+.contact-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+.contact-info {
+  flex: 1;
+  min-width: 0;
+}
+.contact-info strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.contact-phone {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+  margin-right: 10px;
+}
+.contact-addr {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.contact-lock {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.contact-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.btn-icon-edit, .btn-icon-del {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--ease);
+}
+.btn-icon-edit:hover { background: #f0f7ff; border-color: #3498db; }
+.btn-icon-del:hover { background: #fff0f0; border-color: var(--red); }
+
+/* ── Modal Overlay ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.visible { display: flex; }
+
+.modal-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px 20px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-alt);
+}
+
+.modal-card h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+.btn-cancel {
+  padding: 10px 22px;
+  border-radius: 22px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--ease);
+}
+.btn-cancel:hover { background: #f5f5f0; }
+
+/* ═══════════════════════════════════════════════════════════════
    DASHBOARD NAVIGATION TABS
    ═══════════════════════════════════════════════════════════════ */
 .dash-nav {

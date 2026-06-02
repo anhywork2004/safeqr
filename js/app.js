@@ -1,4 +1,6 @@
 var _apiContactsCache = null;
+var _matchedLocalityId = null;
+var _localContactsCache = null;
 
 // ============================================================
 // LOCATION MODULE — Reverse Geocoding with Nominatim (OSM)
@@ -394,25 +396,13 @@ async function initApp() {
     document.getElementById('locality').textContent = SITE_CONFIG.locality;
   }
 
-  renderCards();
+  renderAllCards();
   renderExtraNumbers();
   initLocation();         // ← Start GPS + reverse geocoding
   registerSW();
   setupDraggableButtons();
   setupSOS();
   setupKeyboard();
-
-  // Re-render grid on resize (column count may change)
-  var _resizeTimer;
-  window.addEventListener('resize', function () {
-    clearTimeout(_resizeTimer);
-    _resizeTimer = setTimeout(function () {
-      var grid = document.getElementById('cardGrid');
-      var total = getMergedContacts().length;
-      var cols = calcColumns(total, getMaxCols());
-      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-    }, 200);
-  });
 }
 
 function setupKeyboard() {

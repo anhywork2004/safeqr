@@ -112,11 +112,11 @@ export async function onRequestPut(context) {
     ).bind(...values, id).run();
 
     // Return updated contact
-    const contact = await env.DB.prepare(
+    const updatedContact = await env.DB.prepare(
       'SELECT id, name, phone, address, maps_query, icon, color, description, updated_at FROM contacts WHERE id = ?'
     ).bind(id).first();
 
-    return jsonResponse(contact);
+    return jsonResponse(updatedContact);
   } catch (e) {
     console.error(`[Contacts:${id}] PUT Error:`, e.message);
     return errorResponse('Internal error', 500);
