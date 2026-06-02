@@ -5,6 +5,16 @@
 // This script fetches those files and populates global variables.
 // If fetch fails (offline / file:// protocol / CORS), hardcoded
 // fallback values are used so the app still works everywhere.
+//
+// ⚠️  SECURITY NOTE:
+// DEFAULT_PASSWORDS are shipped to the browser as an offline
+// fallback. This is acceptable ONLY because:
+//   (a) The API enforces JWT auth + PBKDF2 hashing as primary,
+//   (b) Local auth is a fallback when API is unreachable,
+//   (c) All default passwords MUST be changed on first login.
+// In a production deployment, consider removing local auth
+// fallback entirely and requiring API availability.
+// ============================================================
 
 // ── Fallback data (used when JSON files can't be loaded) ────
 
@@ -32,6 +42,9 @@ var _FALLBACK_EXTERNAL = [
   { name: 'Đường dây nóng Bộ Y tế', phone: '1900.9095' }
 ];
 
+// ⚠️  SECURITY: These are DEFAULT passwords only.
+// All passwords MUST be changed on first login.
+// The API uses PBKDF2 salted hashing as the primary auth mechanism.
 var _FALLBACK_PASSWORDS = {
   medical: 'medical2024',
   fire: 'fire2024',
@@ -58,7 +71,9 @@ var _dataLoadPromise = null;
  */
 async function _fetchJSON(path) {
   try {
-    var resp = await fetch(path);
+    // Sanitize path to prevent path traversal
+    var safePath = path.replace(/\.\./g, '').replace(/\/\//g, '/');
+    var resp = await fetch(safePath);
     if (!resp.ok) return null;
     return await resp.json();
   } catch (e) {
@@ -108,6 +123,15 @@ function loadData() {
         ? '[SafeQR] Dữ liệu load từ JSON thành công.'
         : '[SafeQR] Một số file JSON không load được, dùng fallback.'
     );
+
+    // Warn if passwords JSON was loaded (these should be changed)
+    if (passwords) {
+      console.warn(
+        '[SafeQR] ⚠️  Cảnh báo bảo mật: File passwords.json đã được tải. ' +
+        'Vui lòng đổi tất cả mật khẩu mặc định ngay sau lần đăng nhập đầu tiên. ' +
+        'API sẽ dùng PBKDF2 để hash mật khẩu mới.'
+      );
+    }
 
     return allLoaded;
   })();

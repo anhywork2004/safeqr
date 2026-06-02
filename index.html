@@ -8,8 +8,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SafeQR">
   <meta name="description" content="QR Khẩn Cấp – Kết nối nhanh dịch vụ cứu hộ, cứu nạn, cấp cứu. Không cần cài app.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://www.google.com https://nominatim.openstreetmap.org; font-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; manifest-src 'self'; frame-src 'self'">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
   <title>SafeQR – QR Khẩn Cấp</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -67,7 +71,11 @@
   <section class="hero">
     <div class="hero-content">
       <h2 class="hero-title">Quét nhanh<br>Hỗ trợ kịp thời</h2>
-      <p class="hero-desc">Kết nối ngay với dịch vụ cứu hộ, cứu nạn & cấp cứu trên địa bàn <strong id="locality"></strong></p>
+      <p class="hero-desc">Dịch vụ cứu hộ, cứu nạn & cấp cứu <strong>gần bạn nhất</strong> tại địa bàn <strong id="locality"></strong></p>
+      <div class="location-pulse-ring" aria-hidden="true"><div class="pulse-ring r1"></div><div class="pulse-ring r2"></div><div class="pulse-ring r3"></div></div>
+      <div class="location-banner loading" id="userLocation">
+        <span class="loc-dot pulse"></span><span class="loc-text">Đang xác định vị trí...</span>
+      </div>
       <div class="hero-hotlines">
         <button onclick="handleCall('115','Cấp cứu y tế','#e74c3c')" class="hotline-btn hotline-medical">
           <span class="hotline-num">115</span>
@@ -140,6 +148,73 @@
     </div>
   </div>
 
+  <!-- Emergency Type Selector Modal -->
+  <div class="emergency-modal-overlay" id="emergencyModal" onclick="closeEmergencyModalOnOverlay(event)">
+    <div class="emergency-modal" onclick="event.stopPropagation()">
+      <div class="emergency-modal-header">
+        <h3>🚨 Chọn loại tình huống khẩn cấp</h3>
+        <p>Chọn đúng loại để lực lượng hỗ trợ phản hồi nhanh nhất</p>
+      </div>
+      <div class="emergency-types">
+        <button class="emergency-type-btn" data-type="medical" onclick="selectEmergencyType('medical')">
+          <span class="et-icon">🚑</span>
+          <div class="et-text">
+            <span class="et-label">Y tế / Cấp cứu</span>
+            <span class="et-desc">Đột quỵ, tai nạn, khó thở, chấn thương...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="fire" onclick="selectEmergencyType('fire')">
+          <span class="et-icon">🚒</span>
+          <div class="et-text">
+            <span class="et-label">Hỏa hoạn / Cháy nổ</span>
+            <span class="et-desc">Cháy nhà, cháy rừng, cháy xe, nổ gas...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="police" onclick="selectEmergencyType('police')">
+          <span class="et-icon">👮</span>
+          <div class="et-text">
+            <span class="et-label">Công an / An ninh</span>
+            <span class="et-desc">Trộm cắp, gây rối, cần bảo vệ khẩn cấp...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="traffic" onclick="selectEmergencyType('traffic')">
+          <span class="et-icon">🚗</span>
+          <div class="et-text">
+            <span class="et-label">Tai nạn giao thông</span>
+            <span class="et-desc">Va chạm, ùn tắc, người bị thương trên đường...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="electrical" onclick="selectEmergencyType('electrical')">
+          <span class="et-icon">⚡</span>
+          <div class="et-text">
+            <span class="et-label">Sự cố điện</span>
+            <span class="et-desc">Chập điện, đứt dây điện, cột điện đổ...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="water" onclick="selectEmergencyType('water')">
+          <span class="et-icon">💧</span>
+          <div class="et-text">
+            <span class="et-label">Sự cố nước</span>
+            <span class="et-desc">Vỡ ống nước, ngập lụt, rò rỉ nghiêm trọng...</span>
+          </div>
+        </button>
+        <button class="emergency-type-btn" data-type="other" onclick="selectEmergencyType('other')">
+          <span class="et-icon">🆘</span>
+          <div class="et-text">
+            <span class="et-label">Sự cố khác</span>
+            <span class="et-desc">Tình huống khẩn cấp khác cần hỗ trợ</span>
+          </div>
+        </button>
+      </div>
+      <button class="emergency-modal-close-btn" onclick="closeEmergencyModal()">✕ Đóng</button>
+    </div>
+  </div>
+
+  <!-- GPS Accuracy Warning Bar -->
+  <div class="accuracy-warning" id="accuracyWarning">
+    ⚠️ Độ chính xác GPS thấp. Vị trí có thể không chính xác.
+  </div>
+
   <!-- Chat AI Floating Button -->
   <div class="chat-container" id="chatContainer">
     <button class="chat-btn" id="chatBtn" title="Trợ lý AI – Hỏi về sơ cứu, an toàn" onclick="toggleChat()">
@@ -176,6 +251,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <script src="js/security.js"></script>
   <script src="js/data.js"></script>
   <script src="js/api.js"></script>
   <script src="js/app.js"></script>

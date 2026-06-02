@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#c62828">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
   <title>SafeQR – Bảng điều khiển</title>
   <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -23,6 +24,12 @@
       </div>
       <button class="btn-logout" onclick="logout()">Đăng xuất</button>
     </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="dash-nav">
+      <a href="dashboard.html" class="dash-nav-btn active">📋 Liên hệ</a>
+      <a href="emergency.html" class="dash-nav-btn">🗺 Bản đồ khẩn cấp</a>
+    </nav>
 
     <!-- Main -->
     <main class="dash-main">
@@ -70,13 +77,14 @@
       <div class="dash-card">
         <h3>Xem trước trên trang khẩn cấp</h3>
         <div class="preview-card" id="previewCard"></div>
-        <a href="../index.html" class="btn-preview-link" target="_blank">🔗 Mở trang khẩn cấp thực tế →</a>
+        <a href="/" class="btn-preview-link" target="_blank">🔗 Mở trang khẩn cấp thực tế →</a>
       </div>
     </main>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <script src="../js/security.js"></script>
   <script src="../js/data.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/admin-auth.js"></script>

@@ -1,5 +1,243 @@
 var _apiContactsCache = null;
 
+// ============================================================
+// LOCATION MODULE — Reverse Geocoding with Nominatim (OSM)
+// ============================================================
+// Free API, no key required. Converts GPS → readable address.
+// Respects Nominatim 1 req/sec rate limit.
+// Caches result: 2 min fresh, 30 min fallback via localStorage.
+
+var _userLocation = null;      // { lat, lng, accuracy, address, timestamp }
+var _geoPending = false;
+
+/**
+ * Convert GPS coordinates to a human-readable address.
+ * Uses Nominatim (OpenStreetMap) — FREE, no API key, supports tiếng Việt.
+ * Rate limit policy: 1 request per second (enforced).
+ * @param {number} lat
+ * @param {number} lng
+ * @returns {Promise<string|null>}
+ */
+async function reverseGeocode(lat, lng) {
+  // Respect Nominatim's 1 req/sec rate limit
+  if (window.__lastGeoRequest) {
+    var elapsed = Date.now() - window.__lastGeoRequest;
+    if (elapsed < 1100) {
+      await new Promise(function(r) { setTimeout(r, 1100 - elapsed); });
+    }
+  }
+  window.__lastGeoRequest = Date.now();
+
+  try {
+    var url = 'https://nominatim.openstreetmap.org/reverse?' +
+      'format=json' +
+      '&lat=' + encodeURIComponent(lat) +
+      '&lon=' + encodeURIComponent(lng) +
+      '&zoom=18' +
+      '&addressdetails=1' +
+      '&accept-language=vi';
+
+    var resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'SafeQR-Emergency-App/1.0 (safeqr.io)',
+      },
+    });
+
+    if (!resp.ok) return null;
+
+    var data = await resp.json();
+
+    // Primary: use display_name (full address in Vietnamese)
+    if (data && data.display_name) {
+      return data.display_name;
+    }
+
+    // Fallback: build short address from components
+    if (data && data.address) {
+      var a = data.address;
+      var parts = [];
+      if (a.house_number) parts.push(a.house_number);
+      if (a.road)         parts.push(a.road);
+      if (a.suburb)       parts.push(a.suburb);
+      if (a.city_district || a.district) parts.push(a.city_district || a.district);
+      if (a.city || a.town || a.municipality) parts.push(a.city || a.town || a.municipality);
+      if (a.state)        parts.push(a.state);
+      if (parts.length > 0) return parts.join(', ');
+    }
+
+    return null;
+  } catch (e) {
+    console.warn('[Location] Reverse geocode failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Build human-readable location text with Google Maps link.
+ */
+function buildLocationText(lat, lng, address) {
+  var mapsLink = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+  var text = '📍 Vị trí của tôi:\n';
+
+  if (address) {
+    var shortAddr = address.length > 120
+      ? address.substring(0, 117) + '...'
+      : address;
+    text += shortAddr + '\n\n';
+  }
+
+  text += '🗺 Bản đồ: ' + mapsLink;
+  return text;
+}
+
+/**
+ * Get user's position with reverse-geocoded street address.
+ * Caches: 2 min for fresh address, 30 min via localStorage.
+ * @returns {Promise<object|null>} { lat, lng, accuracy, address, timestamp }
+ */
+async function getDetailedPosition() {
+  // Return cached if fresh
+  if (_userLocation) {
+    var age = Date.now() - _userLocation.timestamp;
+    if (_userLocation.address && age < 120000) return _userLocation;
+    if (age < 10000) return _userLocation;
+  }
+
+  if (_geoPending) return _userLocation;
+  _geoPending = true;
+
+  return new Promise(function(resolve) {
+    if (!navigator.geolocation) {
+      _geoPending = false;
+      resolve(null);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+
+        var address = null;
+        try { address = await reverseGeocode(lat, lng); } catch(e) {}
+
+        _userLocation = {
+          lat: lat,
+          lng: lng,
+          accuracy: pos.coords.accuracy,
+          address: address,
+          timestamp: Date.now(),
+        };
+
+        // Persist to localStorage for offline/quick reuse (30-min cache)
+        try {
+          localStorage.setItem('safeqr_location', JSON.stringify({
+            lat: lat, lng: lng, address: address, timestamp: Date.now(),
+          }));
+        } catch(e) {}
+
+        _geoPending = false;
+        updateLocationDisplay();
+        resolve(_userLocation);
+      },
+      function(err) {
+        console.warn('[Location] GPS error:', err.message);
+        var cached = _loadCachedLocation();
+        _geoPending = false;
+        resolve(cached);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000,
+      }
+    );
+  });
+}
+
+function _loadCachedLocation() {
+  try {
+    var raw = localStorage.getItem('safeqr_location');
+    if (!raw) return null;
+    var c = JSON.parse(raw);
+    if (!c || !c.lat || !c.lng) return null;
+    if (Date.now() - c.timestamp > 1800000) return null; // 30 min expiry
+    _userLocation = {
+      lat: c.lat, lng: c.lng, accuracy: null,
+      address: c.address || null, timestamp: c.timestamp,
+    };
+    return _userLocation;
+  } catch(e) { return null; }
+}
+
+/**
+ * Update the on-screen location indicator.
+ */
+function updateLocationDisplay() {
+  var el = document.getElementById('userLocation');
+  if (!el) return;
+
+  if (!_userLocation) {
+    el.innerHTML = '<span class="loc-dot pulse"></span><span class="loc-text">Đang xác định vị trí...</span>';
+    el.className = 'location-banner loading';
+    return;
+  }
+
+  if (_userLocation.address) {
+    // Build a short, street-level address — most relevant for "nearby" feel
+    var addr = _userLocation.address;
+    // Try to extract street + ward/district level (first 2-3 comma parts)
+    var parts = addr.split(',');
+    var short = parts.slice(0, Math.min(3, parts.length)).join(',');
+    if (short.length < 15 && parts.length >= 4) {
+      short = parts.slice(0, 4).join(',');
+    }
+    el.innerHTML = '<span class="loc-dot active"></span><span class="loc-label">📍 Bạn đang ở gần</span> <strong>' + escapeHtml(short) + '</strong>';
+    el.className = 'location-banner located';
+  } else {
+    el.innerHTML = '<span class="loc-dot active"></span><span class="loc-text">📍 ' +
+      _userLocation.lat.toFixed(5) + ', ' + _userLocation.lng.toFixed(5) + '</span>';
+    el.className = 'location-banner coords-only';
+  }
+}
+
+/**
+ * Manual location refresh (called on banner click).
+ */
+async function refreshLocation() {
+  var el = document.getElementById('userLocation');
+  if (el) {
+    el.innerHTML = '<span class="loc-dot pulse"></span>Đang làm mới vị trí...';
+    el.className = 'location-banner loading';
+  }
+  _userLocation = null;
+  try { localStorage.removeItem('safeqr_location'); } catch(e) {}
+  var pos = await getDetailedPosition();
+  if (pos && pos.address) {
+    showToast('📍 Đã cập nhật vị trí chính xác');
+  } else if (pos) {
+    showToast('📍 Đã lấy tọa độ GPS');
+  } else {
+    showToast('⚠️ Không thể định vị. Hãy bật GPS và cấp quyền vị trí.', true);
+  }
+}
+
+function initLocation() {
+  _loadCachedLocation();
+  updateLocationDisplay();
+  getDetailedPosition().catch(function() {}); // background
+
+  var el = document.getElementById('userLocation');
+  if (el) {
+    el.addEventListener('click', refreshLocation);
+    el.title = 'Nhấn để cập nhật vị trí chính xác';
+  }
+}
+
+// ============================================================
+// CONTACTS
+// ============================================================
+
 function getMergedContacts() {
   try {
     var saved = JSON.parse(localStorage.getItem('safeqr_contacts') || '{}');
@@ -51,29 +289,27 @@ async function initApp() {
   // Load data from JSON files (with offline fallback)
   await loadData();
 
-  // Try loading from Cloudflare API first
-  if (API_BASE) {
-    try {
-      var apiContacts = await apiGetContacts();
-      if (apiContacts && apiContacts.length > 0) {
-        _apiContactsCache = apiContacts;
-      }
-      var apiConfig = await apiGetConfig();
-      if (apiConfig && apiConfig.locality) {
-        document.getElementById('locality').textContent = apiConfig.locality;
-      } else {
-        document.getElementById('locality').textContent = SITE_CONFIG.locality;
-      }
-    } catch (e) {
-      console.warn('API init failed, using local data');
+  // Try loading from Cloudflare API first (same-domain Pages Functions or external Worker)
+  // API_BASE defaults to '' which means same-domain → apiUrl() returns correct paths
+  try {
+    var apiContacts = await apiGetContacts();
+    if (apiContacts && apiContacts.length > 0) {
+      _apiContactsCache = apiContacts;
+    }
+    var apiConfig = await apiGetConfig();
+    if (apiConfig && apiConfig.locality) {
+      document.getElementById('locality').textContent = apiConfig.locality;
+    } else {
       document.getElementById('locality').textContent = SITE_CONFIG.locality;
     }
-  } else {
+  } catch (e) {
+    console.warn('API init failed, using local data');
     document.getElementById('locality').textContent = SITE_CONFIG.locality;
   }
 
   renderCards();
   renderExtraNumbers();
+  initLocation();         // ← Start GPS + reverse geocoding
   registerSW();
   setupDraggableButtons();
   setupSOS();
@@ -180,6 +416,10 @@ function copyPhoneNumber() {
   closePhoneModal();
 }
 
+// ============================================================
+// MAPS — Uses user's exact location + address
+// ============================================================
+
 function openMaps(query) {
   showToast('Đang định vị vị trí của bạn...');
 
@@ -188,35 +428,40 @@ function openMaps(query) {
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(
-    function (pos) {
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      var encoded = encodeURIComponent(query);
-      var url = 'https://www.google.com/maps/dir/?api=1'
-        + '&origin=' + lat + ',' + lng
-        + '&destination=' + encoded
-        + '&travelmode=driving';
-
-      if (isMobile) {
-        var geoUri = 'geo:' + lat + ',' + lng + '?q=' + encoded;
-        var started = Date.now();
-        window.location.href = geoUri;
-        setTimeout(function () {
-          if (Date.now() - started < 2000) {
-            window.open(url, '_blank');
-          }
-        }, 800);
-      } else {
-        window.open(url, '_blank');
-      }
-    },
-    function () {
+  // Try to get detailed position (with address)
+  getDetailedPosition().then(function(pos) {
+    var lat, lng;
+    if (pos) {
+      lat = pos.lat;
+      lng = pos.lng;
+    } else {
+      // Last resort: unknown origin
       openMapsFallback(query);
-    },
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-  );
+      return;
+    }
+
+    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var encoded = encodeURIComponent(query);
+    var url = 'https://www.google.com/maps/dir/?api=1'
+      + '&origin=' + lat + ',' + lng
+      + '&destination=' + encoded
+      + '&travelmode=driving';
+
+    if (isMobile) {
+      var geoUri = 'geo:' + lat + ',' + lng + '?q=' + encoded;
+      var started = Date.now();
+      window.location.href = geoUri;
+      setTimeout(function () {
+        if (Date.now() - started < 2000) {
+          window.open(url, '_blank');
+        }
+      }, 800);
+    } else {
+      window.open(url, '_blank');
+    }
+  }).catch(function() {
+    openMapsFallback(query);
+  });
 }
 
 function openMapsFallback(query) {
@@ -238,49 +483,155 @@ function openMapsFallback(query) {
   }
 }
 
+// ============================================================
+// SHARE LOCATION — Emergency type selection + GPS + API submit
+// ============================================================
+
+var _selectedEmergencyType = null;
+
+var EMERGENCY_TYPE_SHORT = {
+  medical: 'Y tế', fire: 'Hỏa hoạn', police: 'Công an',
+  traffic: 'Giao thông', electrical: 'Sự cố điện',
+  water: 'Sự cố nước', other: 'Sự cố khác'
+};
+
+/**
+ * Now opens the emergency type selector modal first.
+ * After type selection, proceeds to GPS + API submission.
+ */
 function shareLocation() {
   if (!navigator.geolocation) {
-    showToast('Thiết bị không hỗ trợ định vị');
+    showToast('Thiết bị không hỗ trợ định vị', true);
+    return;
+  }
+  // Close SOS actions menu
+  toggleSOS();
+  // Open emergency type selector
+  openEmergencyModal();
+}
+
+// ─── Emergency Modal ──────────────────────────────────────────
+
+function openEmergencyModal() {
+  var modal = document.getElementById('emergencyModal');
+  if (modal) modal.classList.add('visible');
+  // Reset selection state
+  _selectedEmergencyType = null;
+  var buttons = document.querySelectorAll('.emergency-type-btn');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.remove('selected');
+  }
+}
+
+function closeEmergencyModal() {
+  var modal = document.getElementById('emergencyModal');
+  if (modal) modal.classList.remove('visible');
+  _selectedEmergencyType = null;
+}
+
+function closeEmergencyModalOnOverlay(event) {
+  if (event.target === document.getElementById('emergencyModal')) {
+    closeEmergencyModal();
+  }
+}
+
+function selectEmergencyType(type) {
+  _selectedEmergencyType = type;
+  // Highlight selected button, dim others
+  var buttons = document.querySelectorAll('.emergency-type-btn');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.toggle('selected', buttons[i].dataset.type === type);
+  }
+  // Proceed after brief visual feedback
+  setTimeout(function() {
+    closeEmergencyModal();
+    submitEmergencyReport(type);
+  }, 280);
+}
+
+// ─── Emergency Report Submission ──────────────────────────────
+
+async function submitEmergencyReport(type) {
+  showToast('Đang lấy vị trí chính xác...');
+
+  var pos = await getDetailedPosition();
+  if (!pos) {
+    showToast('⚠️ Không lấy được vị trí. Vui lòng bật GPS và thử lại.', true);
     return;
   }
 
-  showToast('Đang lấy vị trí...');
+  // Accuracy check: warn if > 15 meters
+  if (pos.accuracy && pos.accuracy > 15) {
+    var warn = document.getElementById('accuracyWarning');
+    warn.textContent = '⚠️ Độ chính xác GPS thấp (' + pos.accuracy.toFixed(1) + 'm). Vị trí có thể không chính xác.';
+    warn.classList.add('show');
+    setTimeout(function() { warn.classList.remove('show'); }, 4500);
+  }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const link = 'https://www.google.com/maps?q=' + latitude + ',' + longitude;
-      const text = 'Vị trí của tôi: ' + link;
+  showToast('Đang gửi báo cáo khẩn cấp...');
 
-      if (navigator.share) {
-        navigator.share({ title: 'Vị trí khẩn cấp', text: text, url: link })
-          .catch(() => fallbackShare(link));
-      } else {
-        fallbackShare(link);
-      }
-    },
-    (err) => {
-      showToast('Không lấy được vị trí. Vui lòng bật GPS.');
-      console.error('Geolocation error:', err);
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
+  var result = await apiPostEmergency({
+    emergency_type: type,
+    latitude: pos.lat,
+    longitude: pos.lng,
+    accuracy: pos.accuracy,
+    address: pos.address
+  });
+
+  var typeShort = EMERGENCY_TYPE_SHORT[type] || type;
+  var link = 'https://www.google.com/maps?q=' + pos.lat + ',' + pos.lng;
+
+  if (result && result.id) {
+    showToast('✅ Đã gửi báo cáo ' + typeShort + ' thành công! Lực lượng hỗ trợ sẽ phản hồi.');
+
+    // Also copy location to clipboard as backup
+    var text = pos.address
+      ? '📍 [' + typeShort + '] Vị trí khẩn cấp: ' + pos.address + '\n🗺 ' + link
+      : '📍 [' + typeShort + '] Vị trí của tôi: ' + link;
+    copyToClipboard(text);
+  } else if (result && result.error === 'rate_limited') {
+    showToast('⚠️ Bạn gửi quá nhanh. Vui lòng đợi vài phút.', true);
+    // Still help with clipboard fallback
+    fallbackShareToClipboard(pos, type);
+  } else {
+    showToast('⚠️ Không gửi được báo cáo. Đã sao chép vị trí vào bộ nhớ tạm.', true);
+    fallbackShareToClipboard(pos, type);
+  }
 }
 
-function fallbackShare(link) {
-  const input = document.createElement('textarea');
-  input.value = 'Vị trí của tôi: ' + link;
-  document.body.appendChild(input);
-  input.select();
-  document.execCommand('copy');
-  document.body.removeChild(input);
-  showToast('Đã sao chép link vị trí! Gửi cho người hỗ trợ.');
+// ─── Clipboard Helpers ────────────────────────────────────────
+
+function copyToClipboard(text) {
+  try {
+    var input = document.createElement('textarea');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+  } catch(e) {}
+}
+
+/**
+ * Fallback: copy location to clipboard + open Google Maps.
+ * Used when API is unreachable or rate-limited.
+ */
+function fallbackShareToClipboard(pos, type) {
+  var link = 'https://www.google.com/maps?q=' + pos.lat + ',' + pos.lng;
+  var typeShort = EMERGENCY_TYPE_SHORT[type] || (type || '');
+  var prefix = typeShort ? '📍 [' + typeShort + '] ' : '📍 ';
+  var text = pos.address
+    ? prefix + 'Vị trí khẩn cấp: ' + pos.address + '\n🗺 ' + link
+    : prefix + 'Vị trí của tôi: ' + link;
+
+  copyToClipboard(text);
+  showToast('✅ Đã sao chép vị trí + địa chỉ. Hãy gửi cho người hỗ trợ.');
   window.open(link, '_blank');
 }
 
 function toggleSOS() {
-  const actions = document.getElementById('sosActions');
-  const btn = document.getElementById('sosBtn');
+  var actions = document.getElementById('sosActions');
+  var btn = document.getElementById('sosBtn');
 
   if (actions.classList.contains('visible')) {
     actions.classList.remove('visible');
@@ -291,21 +642,29 @@ function toggleSOS() {
   }
 }
 
-function showToast(msg) {
-  const toast = document.getElementById('toast');
+function showToast(msg, isError) {
+  var toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.classList.add('show');
+  if (isError) {
+    toast.classList.add('error');
+  } else {
+    toast.classList.remove('error');
+  }
   clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+  toast._timeout = setTimeout(function() {
+    toast.classList.remove('show');
+    toast.classList.remove('error');
+  }, 2800);
 }
 
 function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').catch(function() {});
   }
 }
 
@@ -360,9 +719,11 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
     } catch(e) {}
   }
 
-  // Initialize position without animation
+  // Initialize position — JS controls all positioning via inline styles
   var initialLeft = getLeftForSide(side);
   container.style.left = initialLeft + 'px';
+  container.style.right = 'auto';
+  container.style.top = 'auto';
   container.style.bottom = savedBottom + 'px';
   updatePositionClass(initialLeft);
 
@@ -419,7 +780,9 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
       newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
       newBottom = Math.max(minBottom, Math.min(maxBottom, newBottom));
       _dragState.container.style.left = newLeft + 'px';
+      _dragState.container.style.right = 'auto';
       _dragState.container.style.bottom = newBottom + 'px';
+      _dragState.container.style.top = 'auto';
       updatePositionClass(newLeft);
     });
     document.addEventListener('mouseup', function(e) {
@@ -438,6 +801,7 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
         snapLeft = window.innerWidth - _dragState.btnWidth - _dragState.edgeGap;
       }
       container.style.left = snapLeft + 'px';
+      container.style.right = 'auto';
       container.classList.remove('dragging');
       updatePositionClass(snapLeft);
       savePosition(snapLeft, currentBottom);
@@ -463,7 +827,9 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
       newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
       newBottom = Math.max(minBottom, Math.min(maxBottom, newBottom));
       _dragState.container.style.left = newLeft + 'px';
+      _dragState.container.style.right = 'auto';
       _dragState.container.style.bottom = newBottom + 'px';
+      _dragState.container.style.top = 'auto';
       updatePositionClass(newLeft);
     }, {passive: false});
     document.addEventListener('touchend', function(e) {
@@ -481,6 +847,7 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
         snapLeft = window.innerWidth - _dragState.btnWidth - edgeGap;
       }
       container.style.left = snapLeft + 'px';
+      container.style.right = 'auto';
       container.classList.remove('dragging');
       updatePositionClass(snapLeft);
       savePosition(snapLeft, currentBottom);
@@ -500,7 +867,9 @@ function setupDraggable(containerId, btnId, panelId, defaultSide) {
     var s = getSideFromLeft(currentLeft);
     var snapLeft = getLeftForSide(s);
     container.style.left = snapLeft + 'px';
+    container.style.right = 'auto';
     container.style.bottom = currentBottom + 'px';
+    container.style.top = 'auto';
     updatePositionClass(snapLeft);
   });
 

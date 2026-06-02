@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#c62828">
-  <title>SafeQR – Tạo mã QR Khẩn Cấp</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
+  <title>SafeQR – Tạo Poster + Mã QR Khẩn Cấp</title>
   <style>
     :root {
       --red: #c62828;
       --red-dark: #b71c1c;
+      --red-deep: #7f0000;
       --bg: #fafafa;
       --card-bg: #fff;
       --text: #212121;
@@ -23,7 +25,7 @@
       font-family: var(--font);
       background: var(--bg);
       color: var(--text);
-      max-width: 600px;
+      max-width: 680px;
       margin: 0 auto;
       min-height: 100vh;
       padding: 20px 16px 40px;
@@ -39,241 +41,608 @@
       font-size: 0.85rem;
       margin-bottom: 20px;
     }
+    .back-link:hover { opacity: 0.75; }
 
+    .page-header {
+      margin-bottom: 24px;
+    }
     .page-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 6px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -0.6px;
+      margin-bottom: 4px;
     }
     .page-sub {
       font-size: 0.85rem;
       color: var(--text-secondary);
-      margin-bottom: 24px;
+      line-height: 1.5;
     }
 
+    /* ── Form Card ── */
+    .form-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+      border: 1px solid #eee;
+    }
     .form-group {
       margin-bottom: 16px;
     }
     .form-group label {
       display: block;
-      font-weight: 600;
-      font-size: 0.85rem;
+      font-weight: 700;
+      font-size: 0.82rem;
       margin-bottom: 6px;
+      color: var(--text);
+    }
+    .form-group .hint {
+      font-weight: 400;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
     }
     .form-group input, .form-group select {
       width: 100%;
-      padding: 10px 14px;
+      padding: 11px 14px;
       border: 1.5px solid #ddd;
-      border-radius: var(--radius);
-      font-size: 0.9rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
       font-family: var(--font);
       transition: border-color 0.2s;
+      background: #fafafa;
     }
     .form-group input:focus, .form-group select:focus {
       outline: none;
       border-color: var(--red);
+      background: #fff;
     }
 
-    .btn-primary {
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: var(--red);
-      color: #fff;
-      border: none;
-      padding: 10px 24px;
+      padding: 11px 22px;
       border-radius: 24px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 700;
       font-family: var(--font);
       cursor: pointer;
+      border: none;
       transition: all 0.15s;
+      text-decoration: none;
     }
-    .btn-primary:active { opacity: 0.8; transform: scale(0.96); }
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(198,40,40,0.25);
+    }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-primary:active { opacity: 0.85; transform: scale(0.97); }
+
     .btn-outline {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
       background: #fff;
       color: var(--red);
       border: 1.5px solid var(--red);
-      padding: 10px 24px;
-      border-radius: 24px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      font-family: var(--font);
+    }
+    .btn-outline:hover { background: #fff5f5; }
+    .btn-outline:active { background: var(--red); color: #fff; }
+    .btn-outline:disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    /* ── Poster Preview ── */
+    .poster-section {
+      display: none;
+    }
+    .poster-section.visible {
+      display: block;
+    }
+    .poster-section h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .poster-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .poster-tab {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1.5px solid #ddd;
+      background: #fff;
       cursor: pointer;
-      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--font);
       transition: all 0.15s;
     }
-    .btn-outline:active { background: var(--red); color: #fff; }
-
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-
-    .result-area {
-      margin-top: 28px;
-      text-align: center;
-      display: none;
+    .poster-tab:hover { border-color: var(--red); }
+    .poster-tab.active {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
     }
-    .result-area.visible { display: block; }
 
-    #qrCanvas { max-width: 100%; height: auto; }
-
-    .sticker-preview {
-      display: none;
-      margin: 24px auto 0;
-      background: #fff;
-      border: 2px dashed #ccc;
-      padding: 20px;
+    .poster-canvas-wrap {
+      text-align: center;
+      background: #e8e5dd;
       border-radius: 12px;
-      max-width: 380px;
-      text-align: center;
+      padding: 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .sticker-preview.visible { display: block; }
-    .sticker-preview h4 {
-      font-size: 0.85rem;
-      color: var(--red);
-      margin: 10px 0 4px;
+    #posterCanvas {
+      max-width: 100%;
+      height: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border-radius: 4px;
     }
-    .sticker-preview p {
-      font-size: 0.72rem;
-      color: var(--text-secondary);
+
+    /* ── Instructions Card ── */
+    .instructions-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 24px;
+      border: 1px solid #eee;
+      box-shadow: var(--shadow);
+    }
+    .instructions-card h4 {
+      font-size: 0.9rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .instruction-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .instruction-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+    .instruction-step .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--red);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.75rem;
+      flex-shrink: 0;
     }
 
     @media print {
       body { background: #fff; padding: 0; }
-      .back-link, .page-title, .page-sub, .form-group, .actions, .btn-primary, .btn-outline { display: none; }
-      .sticker-preview {
-        display: block !important;
-        border: none;
-        page-break-after: always;
-        margin: 0;
-        padding: 10mm;
-        max-width: 100%;
+      .back-link, .page-header, .form-card, .poster-tabs,
+      .poster-section h3, .btn, .instructions-card,
+      .form-actions { display: none; }
+      .poster-section { display: block !important; margin: 0; }
+      .poster-canvas-wrap {
+        background: #fff;
+        padding: 0;
+        box-shadow: none;
+        border-radius: 0;
+        overflow: visible;
       }
-      .result-area { display: none !important; }
+      #posterCanvas {
+        max-width: 100%;
+        width: auto;
+        height: auto;
+        box-shadow: none;
+        border-radius: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <a href="../index.html" class="back-link">← Quay lại trang khẩn cấp</a>
+  <a href="/" class="back-link">← Quay lại trang khẩn cấp</a>
 
-  <h1 class="page-title">Tạo mã QR Khẩn Cấp</h1>
-  <p class="page-sub">Nhập đường dẫn trang khẩn cấp của địa phương bạn để tạo QR sticker.</p>
-
-  <div class="form-group">
-    <label for="qrUrl">URL trang khẩn cấp</label>
-    <input type="url" id="qrUrl" placeholder="https://safeqr.example.com" value="">
+  <div class="page-header">
+    <h1 class="page-title">📋 Tạo Poster + Mã QR Khẩn Cấp</h1>
+    <p class="page-sub">Tạo poster khổ A4 kèm mã QR để dán tại chung cư, công ty, trường học, nhà văn hóa... Người dân quét mã QR khi cần hỗ trợ khẩn cấp.</p>
   </div>
 
-  <div class="form-group">
-    <label for="qrSize">Kích thước QR (px)</label>
-    <select id="qrSize">
-      <option value="256">256px — Dán trong nhà</option>
-      <option value="320" selected>320px — Bảng thông báo</option>
-      <option value="400">400px — Áp phích lớn</option>
-      <option value="512">512px — In chất lượng cao</option>
-    </select>
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-group">
+      <label for="qrUrl">🌐 URL trang khẩn cấp của địa phương</label>
+      <span class="hint">Dán link trang SafeQR của phường/xã bạn. VD: https://safeqr-drd.pages.dev</span>
+      <input type="url" id="qrUrl" placeholder="https://safeqr.pages.dev" value="">
+    </div>
+
+    <div class="form-group">
+      <label for="localityName">📍 Tên địa phương hiển thị trên poster</label>
+      <span class="hint">VD: "TP. Thủ Đức, TP. Hồ Chí Minh" hoặc "Phường Bình Dương, TP. Thủ Đức"</span>
+      <input type="text" id="localityName" placeholder="TP. Thủ Đức, TP. Hồ Chí Minh" value="" maxlength="120">
+    </div>
+
+    <div class="form-group">
+      <label for="qrSize">📐 Khổ poster</label>
+      <select id="qrSize">
+        <option value="a4-portrait" selected>Poster A4 dọc (in tại nhà / tiệm photo)</option>
+        <option value="a4-landscape">Poster A4 ngang — Bảng thông báo</option>
+        <option value="a5-portrait">Poster A5 dọc — Dán trong thang máy</option>
+        <option value="large">Poster lớn — In băng-rôn, áp phích</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="generatePoster()">✨ Tạo Poster</button>
+    </div>
   </div>
 
-  <div class="actions">
-    <button class="btn-primary" onclick="generateQR()">✨ Tạo mã QR</button>
-    <button class="btn-outline" onclick="downloadQR()" style="display:none" id="btnDownload">📥 Tải ảnh PNG</button>
-    <button class="btn-outline" onclick="window.print()" style="display:none" id="btnPrint">🖨 In sticker</button>
-  </div>
+  <!-- Poster Output -->
+  <div class="poster-section" id="posterSection">
+    <h3>📌 Poster của bạn</h3>
 
-  <div class="result-area" id="resultArea">
-    <canvas id="qrCanvas"></canvas>
-  </div>
+    <div class="poster-tabs" id="posterTabs">
+      <button class="poster-tab active" data-format="a4-portrait" onclick="switchPosterFormat('a4-portrait')">A4 dọc</button>
+      <button class="poster-tab" data-format="a4-landscape" onclick="switchPosterFormat('a4-landscape')">A4 ngang</button>
+      <button class="poster-tab" data-format="a5-portrait" onclick="switchPosterFormat('a5-portrait')">A5 dọc</button>
+      <button class="poster-tab" data-format="large" onclick="switchPosterFormat('large')">Lớn</button>
+    </div>
 
-  <div class="sticker-preview" id="stickerPreview">
-    <canvas id="qrCanvasPrint"></canvas>
-    <h4>QR KHẨN CẤP – QUÉT KHI CẦN HỖ TRỢ</h4>
-    <p>📞 115 Cấp cứu · 114 Cứu hỏa · 113 Công an</p>
-    <p>📍 Chỉ đường nhanh · Không cần cài ứng dụng</p>
-    <p style="margin-top:6px; font-weight:600;">SafeQR – Quét nhanh, hỗ trợ kịp thời</p>
+    <div class="poster-canvas-wrap">
+      <canvas id="posterCanvas"></canvas>
+    </div>
+
+    <div class="form-actions" style="margin-top:18px;">
+      <button class="btn btn-primary" onclick="downloadPoster()">📥 Tải ảnh PNG</button>
+      <button class="btn btn-outline" onclick="window.print()">🖨 In Poster</button>
+    </div>
+
+    <!-- Usage Instructions -->
+    <div class="instructions-card">
+      <h4>📖 Hướng dẫn sử dụng Poster QR Khẩn Cấp</h4>
+      <div class="instruction-steps">
+        <div class="instruction-step">
+          <span class="step-num">1</span>
+          <span><strong>Dán poster ở nơi dễ thấy:</strong> Sảnh chung cư, bảng tin công ty, cổng trường học, nhà văn hóa, thang máy, hành lang chung cư.</span>
+        </div>
+        <div class="instruction-step">
+          <span class="step-num">2</span>
+          <span><strong>Người dân quét mã QR</strong> bằng camera điện thoại (iPhone/Android đều quét được, không cần cài app).</span>
+        </div>
+        <div class="instruction-step">
+          <span class="step-num">3</span>
+          <span><strong>Trang khẩn cấp hiện ra ngay</strong> — hiển thị vị trí người dùng, danh sách số điện thoại cứu hộ/cấp cứu/công an gần nhất, và nút gọi khẩn cấp SOS.</span>
+        </div>
+        <div class="instruction-step">
+          <span class="step-num">4</span>
+          <span><strong>In nhiều bản</strong> và dán rải rác trong khu vực. Nên ép plastic (ép lụa) để poster bền với thời tiết nếu dán ngoài trời.</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script>
-    document.getElementById('qrUrl').value = window.location.origin + window.location.pathname.replace(/qr\/.*/, '');
+    var _currentFormat = 'a4-portrait';
+    var _currentQRData = null;  // { url, localityName, qr, format }
 
-    function generateQR() {
-      const url = document.getElementById('qrUrl').value.trim();
-      if (!url) { alert('Vui lòng nhập URL'); return; }
+    // Auto-fill URL from current origin
+    (function() {
+      var urlInput = document.getElementById('qrUrl');
+      var base = window.location.origin + window.location.pathname.replace(/qr\/.*/, '');
+      if (!urlInput.value) {
+        urlInput.value = base;
+      }
+      // Try to detect locality from main page config
+      var locInput = document.getElementById('localityName');
+      if (!locInput.value && typeof SITE_CONFIG !== 'undefined' && SITE_CONFIG.locality) {
+        locInput.value = SITE_CONFIG.locality;
+      }
+    })();
 
-      const size = parseInt(document.getElementById('qrSize').value);
+    // ─── Poster Dimensions (at 150 DPI for print quality) ────
+    var POSTER_SIZES = {
+      'a4-portrait':  { width: 1240, height: 1754, name: 'A4 dọc' },
+      'a4-landscape': { width: 1754, height: 1240, name: 'A4 ngang' },
+      'a5-portrait':  { width: 1240, height: 874,  name: 'A5 dọc' },
+      'large':        { width: 2480, height: 3508, name: 'Lớn (A3/A2)' },
+    };
 
-      try {
-        const typeNumber = 6;
-        const errorCorrectionLevel = 'M';
-        const qr = qrcode(typeNumber, errorCorrectionLevel);
-        qr.addData(url);
-        qr.make();
+    function getPosterSize(format) {
+      return POSTER_SIZES[format] || POSTER_SIZES['a4-portrait'];
+    }
 
-        const cellSize = Math.floor(size / qr.getModuleCount());
-        const canvasSize = cellSize * qr.getModuleCount();
-        const canvas = document.getElementById('qrCanvas');
-        canvas.width = canvasSize;
-        canvas.height = canvasSize;
-        const ctx = canvas.getContext('2d');
+    // ─── Generate QR ──────────────────────────────────────────
 
-        const padding = cellSize * 4;
-        canvas.width += padding * 2;
-        canvas.height += padding * 2;
+    function makeQR(url, size) {
+      var typeNumber = 6;
+      var errorCorrection = 'M';
+      var qr = qrcode(typeNumber, errorCorrection);
+      qr.addData(url);
+      qr.make();
+      return qr;
+    }
+
+    // ─── Draw Poster on Canvas ────────────────────────────────
+
+    function drawPoster(format) {
+      _currentFormat = format;
+      var size = getPosterSize(format);
+      var canvas = document.getElementById('posterCanvas');
+      var ctx = canvas.getContext('2d');
+
+      canvas.width = size.width;
+      canvas.height = size.height;
+
+      var W = size.width;
+      var H = size.height;
+
+      // Background — white
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      // ── Red top accent bar ──
+      var barH = Math.round(H * 0.018);
+      ctx.fillStyle = '#c62828';
+      ctx.fillRect(0, 0, W, barH);
+
+      // ── Red bottom bar ──
+      ctx.fillStyle = '#c62828';
+      ctx.fillRect(0, H - barH, W, barH);
+
+      // ── Left red stripe ──
+      var stripeW = Math.round(W * 0.012);
+      ctx.fillStyle = '#c62828';
+      ctx.fillRect(0, 0, stripeW, H);
+
+      // ── Subtle inner border ──
+      var margin = Math.round(Math.min(W, H) * 0.04);
+      ctx.strokeStyle = '#e0dcd2';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(margin, margin, W - 2 * margin, H - 2 * margin);
+
+      // ── Header section ──
+      var headerY = margin + Math.round(H * 0.04);
+      var contentX = margin + Math.round(W * 0.05);
+      var contentW = W - 2 * (margin + Math.round(W * 0.05));
+
+      // SafeQR badge
+      var badgeW = Math.round(W * 0.22);
+      var badgeH = Math.round(H * 0.06);
+      var badgeX = contentX;
+      ctx.fillStyle = '#c62828';
+      roundRect(ctx, badgeX, headerY, badgeW, badgeH, Math.round(badgeH * 0.35));
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      var badgeFontSize = Math.round(badgeH * 0.5);
+      ctx.font = 'bold ' + badgeFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('SAFEQR', badgeX + badgeW / 2, headerY + badgeH / 2);
+
+      // Title text
+      var titleX = badgeX + badgeW + Math.round(W * 0.03);
+      var titleFontSize = Math.round(H * 0.04);
+      ctx.fillStyle = '#1c1c1c';
+      ctx.font = '900 ' + titleFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('QR KHẨN CẤP', titleX, headerY);
+
+      // Subtitle
+      var subFontSize = Math.round(H * 0.022);
+      ctx.fillStyle = '#616161';
+      ctx.font = '600 ' + subFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('Quét nhanh – Hỗ trợ kịp thời', titleX, headerY + titleFontSize + Math.round(H * 0.006));
+
+      // Locality name
+      var locName = (document.getElementById('localityName').value || '').trim();
+      if (locName) {
+        var locFontSize = Math.round(H * 0.026);
+        ctx.fillStyle = '#b71c1c';
+        ctx.font = '700 ' + locFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText('📍 ' + locName, titleX, headerY + titleFontSize + subFontSize + Math.round(H * 0.018));
+      }
+
+      // ── QR Code (center area) ──
+      var qrAreaTop = headerY + badgeH + Math.round(H * 0.06);
+      var qrAreaBottom = H - margin - Math.round(H * 0.22);
+      var qrAreaHeight = qrAreaBottom - qrAreaTop;
+
+      // QR size = about 55% of poster width for A4 portrait
+      var qrPixelSize = Math.round(W * 0.52);
+      // Cap at available height
+      if (qrPixelSize > qrAreaHeight * 0.9) {
+        qrPixelSize = Math.round(qrAreaHeight * 0.9);
+      }
+
+      var url = document.getElementById('qrUrl').value.trim();
+      if (url) {
+        var qr = makeQR(url, qrPixelSize);
+        var cellSize = Math.floor(qrPixelSize / qr.getModuleCount());
+        var canvasQrSize = cellSize * qr.getModuleCount();
+        var qrX = Math.round((W - canvasQrSize) / 2);
+        var qrY = Math.round(qrAreaTop + (qrAreaHeight - canvasQrSize) / 2);
+
+        // QR white background
+        var qrPad = Math.round(cellSize * 3);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(qrX - qrPad, qrY - qrPad, canvasQrSize + 2 * qrPad, canvasQrSize + 2 * qrPad);
+        // QR shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.10)';
+        ctx.shadowBlur = Math.round(W * 0.015);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - qrPad, qrY - qrPad, canvasQrSize + 2 * qrPad, canvasQrSize + 2 * qrPad);
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+
+        // QR border
+        ctx.strokeStyle = '#c62828';
+        ctx.lineWidth = Math.round(W * 0.004);
+        ctx.strokeRect(qrX - qrPad, qrY - qrPad, canvasQrSize + 2 * qrPad, canvasQrSize + 2 * qrPad);
+
+        // Draw QR modules
         ctx.fillStyle = '#c62828';
-
-        for (let row = 0; row < qr.getModuleCount(); row++) {
-          for (let col = 0; col < qr.getModuleCount(); col++) {
+        for (var row = 0; row < qr.getModuleCount(); row++) {
+          for (var col = 0; col < qr.getModuleCount(); col++) {
             if (qr.isDark(row, col)) {
-              ctx.fillRect(
-                padding + col * cellSize,
-                padding + row * cellSize,
-                cellSize,
-                cellSize
-              );
+              ctx.fillRect(qrX + col * cellSize, qrY + row * cellSize, cellSize, cellSize);
             }
           }
         }
+      }
 
-        document.getElementById('resultArea').classList.add('visible');
-        document.getElementById('btnDownload').style.display = '';
-        document.getElementById('btnPrint').style.display = '';
+      // ── Text under QR ──
+      var belowQRY = qrAreaBottom - Math.round(H * 0.04);
+      ctx.fillStyle = '#1c1c1c';
+      var scanFontSize = Math.round(H * 0.025);
+      ctx.font = '800 ' + scanFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📷 Quét mã QR bằng camera điện thoại', W / 2, belowQRY);
+      ctx.fillStyle = '#616161';
+      var scanSubSize = Math.round(H * 0.018);
+      ctx.font = '500 ' + scanSubSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('Không cần cài ứng dụng · Hỗ trợ iPhone & Android', W / 2, belowQRY + scanFontSize + Math.round(H * 0.01));
 
-        // Also render for print sticker
-        const pCanvas = document.getElementById('qrCanvasPrint');
-        const pCtx = pCanvas.getContext('2d');
-        pCanvas.width = 200;
-        pCanvas.height = 200;
-        const pCellSize = Math.floor(200 / qr.getModuleCount());
-        const pSize = pCellSize * qr.getModuleCount();
-        const pPad = (200 - pSize) / 2;
-        pCtx.fillStyle = '#fff';
-        pCtx.fillRect(0, 0, 200, 200);
-        pCtx.fillStyle = '#c62828';
-        for (let row = 0; row < qr.getModuleCount(); row++) {
-          for (let col = 0; col < qr.getModuleCount(); col++) {
-            if (qr.isDark(row, col)) {
-              pCtx.fillRect(pPad + col * pCellSize, pPad + row * pCellSize, pCellSize, pCellSize);
-            }
-          }
-        }
-        document.getElementById('stickerPreview').classList.add('visible');
+      // ── Instructions section (bottom area) ──
+      var instY = qrAreaBottom + Math.round(H * 0.02);
+      var instW = contentW * 0.9;
+      var instX = (W - instW) / 2;
+      var instH = H - margin - instY - Math.round(H * 0.03);
 
-      } catch(e) {
-        alert('Lỗi tạo QR: ' + e.message);
-        console.error(e);
+      // Instruction box
+      ctx.fillStyle = '#fafaf7';
+      ctx.strokeStyle = '#e8e4db';
+      ctx.lineWidth = 1;
+      roundRect(ctx, instX, instY, instW, instH, Math.round(instH * 0.08));
+      ctx.fill();
+      ctx.stroke();
+
+      var instPadX = Math.round(instW * 0.05);
+      var instPadY = Math.round(instH * 0.1);
+
+      // Instructions header
+      var instHeaderSize = Math.round(H * 0.02);
+      ctx.fillStyle = '#c62828';
+      ctx.font = '800 ' + instHeaderSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('📋 KHI GẶP TÌNH HUỐNG KHẨN CẤP:', instX + instPadX, instY + instPadY);
+
+      // Step 1
+      var stepY = instY + instPadY + instHeaderSize + Math.round(H * 0.018);
+      var stepFontSize = Math.round(H * 0.018);
+      var stepLineH = Math.round(H * 0.032);
+      ctx.fillStyle = '#1c1c1c';
+      ctx.font = '600 ' + stepFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('1. Mở camera điện thoại, hướng vào mã QR này.', instX + instPadX, stepY);
+      ctx.fillText('2. Trang khẩn cấp hiện ra → xem vị trí của bạn + số điện thoại cứu hộ gần nhất.', instX + instPadX, stepY + stepLineH);
+      ctx.fillText('3. Bấm nút GỌI NGAY (115 Cấp cứu · 114 Cứu hỏa · 113 Công an).', instX + instPadX, stepY + 2 * stepLineH);
+      ctx.fillText('4. Gửi vị trí của bạn qua nút SOS để lực lượng chức năng định vị chính xác.', instX + instPadX, stepY + 3 * stepLineH);
+
+      // ── Emergency numbers in red callout ──
+      var calloutY = instY + instH - instPadY - Math.round(H * 0.055);
+      var calloutH = Math.round(H * 0.04);
+      var calloutW = instW * 0.85;
+      var calloutX = (W - calloutW) / 2;
+
+      ctx.fillStyle = '#c62828';
+      roundRect(ctx, calloutX, calloutY, calloutW, calloutH, Math.round(calloutH * 0.4));
+      ctx.fill();
+
+      var calloutFontSize = Math.round(calloutH * 0.55);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 ' + calloutFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('115 Cấp cứu  ·  114 Cứu hỏa  ·  113 Công an  ·  112 Tổng đài khẩn cấp', calloutX + calloutW / 2, calloutY + calloutH / 2);
+
+      // ── Footer ──
+      var footerY = H - margin - Math.round(H * 0.012);
+      var footerFontSize = Math.round(H * 0.015);
+      ctx.fillStyle = '#b0b0aa';
+      ctx.font = '500 ' + footerFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('SafeQR – Mô hình chuyển đổi số cộng đồng · Miễn phí · Không cần cài ứng dụng · Chi phí 0đ', W / 2, footerY);
+
+      // Save current data
+      _currentQRData = {
+        url: url,
+        localityName: locName,
+        format: format,
+        canvas: canvas
+      };
+
+      // Show poster section
+      document.getElementById('posterSection').classList.add('visible');
+      // Update tab active state
+      var tabs = document.querySelectorAll('.poster-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].dataset.format === format);
       }
     }
 
-    function downloadQR() {
-      const canvas = document.getElementById('qrCanvas');
-      const link = document.createElement('a');
-      link.download = 'SafeQR-Emergency.png';
+    // ─── Generate Poster ──────────────────────────────────────
+
+    function generatePoster() {
+      var url = document.getElementById('qrUrl').value.trim();
+      if (!url) { alert('Vui lòng nhập URL trang khẩn cấp.'); return; }
+      if (url.indexOf('http') !== 0) { alert('URL phải bắt đầu bằng http:// hoặc https://'); return; }
+
+      // Sync format from dropdown
+      _currentFormat = document.getElementById('qrSize').value;
+      drawPoster(_currentFormat);
+      document.getElementById('posterSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function switchPosterFormat(format) {
+      if (!_currentQRData) return;
+      drawPoster(format);
+    }
+
+    // ─── Download ──────────────────────────────────────────────
+
+    function downloadPoster() {
+      if (!_currentQRData) return;
+      var canvas = _currentQRData.canvas;
+      var link = document.createElement('a');
+      var locName = (_currentQRData.localityName || 'dia-phuong').toLowerCase()
+        .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 40);
+      link.download = 'safeqr-poster-' + locName + '-' + _currentQRData.format + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
+    }
+
+    // ─── Round Rect Helper ─────────────────────────────────────
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
     }
   </script>
 </body>

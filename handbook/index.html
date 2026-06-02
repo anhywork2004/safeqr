@@ -14,129 +14,112 @@
 
   <div class="bg-ambient"></div>
   <canvas class="particles" id="particles"></canvas>
-  <a href="../index.html" class="back-link">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+
+  <a href="/" class="back-link" aria-label="Về trang khẩn cấp">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Về trang khẩn cấp
   </a>
 
-  <!-- ═══ NOTEBOOK WRAPPER ═══ -->
-  <div class="notebook-scene" id="notebookScene">
+  <!-- ═══ BOOK SCENE ═══ -->
+  <div class="book-scene" id="bookScene">
+    <div class="book-ground-shadow"></div>
 
-    <!-- Drop shadow beneath notebook -->
-    <div class="notebook-shadow"></div>
+    <div class="book" id="book">
 
-    <!-- CLOSED STATE: cover only (square notebook look) -->
-    <div class="notebook-closed" id="notebookClosed">
+      <!-- 3D back cover depth layer -->
+      <div class="book-back" aria-hidden="true"></div>
+      <!-- Page thickness right edge -->
+      <div class="pages-thickness" aria-hidden="true"></div>
 
-      <!-- Cover face -->
-      <div class="cover-face">
-        <!-- Notebook ring holes along left edge -->
-        <div class="ring-holes">
-          <div class="ring"></div>
-          <div class="ring"></div>
-          <div class="ring"></div>
-          <div class="ring"></div>
-          <div class="ring"></div>
+      <!-- STATIC SPREAD: always visible, content swaps instantly under flip-leaf -->
+      <div class="spread" id="spread" aria-live="polite">
+        <div class="spread-left" id="spreadLeft">
+          <div class="page-inner" id="pageLeftContent"></div>
+        </div>
+        <div class="spine" aria-hidden="true">
+          <div class="spine-highlight"></div>
+        </div>
+        <div class="spread-right" id="spreadRight">
+          <div class="page-inner" id="pageRightContent"></div>
+        </div>
+      </div>
+
+      <!-- FLIP LEAF: the half-page panel that rotates -->
+      <div class="flip-leaf" id="flipLeaf" aria-hidden="true">
+        <div class="flip-leaf-front" id="flipFront"></div>
+        <div class="flip-leaf-back" id="flipBack"></div>
+      </div>
+
+      <!-- FRONT COVER: z-index 30, flips open on click -->
+      <div class="cover" id="cover" role="button" tabindex="0" aria-label="Mở sổ tay sơ cứu">
+
+        <div class="cover-texture" aria-hidden="true"></div>
+
+        <div class="cover-ring-band" aria-hidden="true">
+          <div class="ring-hole"></div>
+          <div class="ring-hole"></div>
+          <div class="ring-hole"></div>
+          <div class="ring-hole"></div>
+          <div class="ring-hole"></div>
+          <div class="ring-hole"></div>
         </div>
 
-        <!-- Cover content -->
-        <div class="cover-inner">
-          <div class="cover-badge">SƠ CỨU KHẨN CẤP</div>
-          <div class="cover-cross">
-            <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-              <circle cx="26" cy="26" r="25" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <rect x="21" y="11" width="10" height="30" rx="3" fill="white"/>
-              <rect x="11" y="21" width="30" height="10" rx="3" fill="white"/>
+        <div class="cover-border" aria-hidden="true"></div>
+
+        <div class="cover-body">
+          <span class="cover-badge">SƠ CỨU KHẨN CẤP</span>
+
+          <div class="cover-cross" aria-hidden="true">
+            <svg width="clamp(44px,8vw,64px)" height="clamp(44px,8vw,64px)" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+              <rect x="25" y="12" width="14" height="40" rx="4" fill="white"/>
+              <rect x="12" y="25" width="40" height="14" rx="4" fill="white"/>
             </svg>
           </div>
+
           <h1 class="cover-title">SỔ TAY<br>SƠ CỨU</h1>
-          <p class="cover-sub">Hướng dẫn xử lý nhanh<br>các tình huống khẩn cấp</p>
-          <div class="cover-divider"></div>
+          <div class="cover-rule" aria-hidden="true"></div>
+          <p class="cover-sub">Hướng dẫn xử lý nhanh các tình huống khẩn cấp</p>
           <p class="cover-brand">SafeQR · 2026</p>
-          <button class="cover-open-btn" id="openBtn" onclick="openNotebook()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+
+          <button class="cover-open-btn" id="openBtn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             Mở sổ tay
           </button>
         </div>
 
-        <!-- Cover page-edge stack (right side) -->
-        <div class="cover-pages-edge"></div>
-        <!-- Cover bottom edge -->
-        <div class="cover-bottom-edge"></div>
+        <div class="cover-shimmer" aria-hidden="true"></div>
+        <div class="cover-page-edge" aria-hidden="true"></div>
       </div>
+
+      <!-- Close book button (on spread-left, visible when open) -->
+      <button class="close-book-btn" id="closeBtn" type="button" aria-label="Đóng sổ tay">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        Đóng
+      </button>
+
     </div>
-
-    <!-- OPEN STATE: two-page spread -->
-    <div class="notebook-open" id="notebookOpen">
-
-      <!-- Left cover (inside of front cover, stays left when open) -->
-      <div class="open-cover-left" id="openCoverLeft">
-        <div class="inside-cover-content">
-          <div class="inside-cross">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <circle cx="18" cy="18" r="17" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
-              <rect x="14" y="7" width="8" height="22" rx="2" fill="rgba(255,255,255,0.6)"/>
-              <rect x="7" y="14" width="22" height="8" rx="2" fill="rgba(255,255,255,0.6)"/>
-            </svg>
-          </div>
-          <p class="inside-title">SỔ TAY SƠ CỨU</p>
-          <p class="inside-sub">SafeQR · 2026</p>
-        </div>
-        <!-- Ring holes on left cover -->
-        <div class="open-ring-holes">
-          <div class="ring"></div><div class="ring"></div><div class="ring"></div>
-          <div class="ring"></div><div class="ring"></div>
-        </div>
-      </div>
-
-      <!-- Spine / gutter -->
-      <div class="open-spine">
-        <div class="spine-shadow-left"></div>
-        <div class="spine-shadow-right"></div>
-        <div class="spine-line"></div>
-      </div>
-
-      <!-- Right page area (content pages) -->
-      <div class="pages-wrapper" id="pagesWrapper">
-        <!-- Current page content -->
-        <div class="nb-page nb-page-left" id="pageLeft">
-          <div class="page-content" id="pageLeftContent"></div>
-        </div>
-        <div class="nb-page nb-page-right" id="pageRight">
-          <div class="page-content" id="pageRightContent"></div>
-        </div>
-
-        <!-- Page flip overlay -->
-        <div class="page-flip-overlay" id="pageFlipOverlay">
-          <div class="flip-reveal" id="flipReveal"></div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- Controls bar -->
-  <div class="nb-controls" id="nbControls">
-    <button class="nb-ctrl-btn" id="btnPrev" onclick="prevPage()" title="Trang trước">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  <div class="controls" id="controls" role="navigation" aria-label="Điều hướng trang sách">
+    <button class="ctrl-btn" id="btnPrev" type="button" title="Trang trước" aria-label="Trang trước" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <div class="nb-ctrl-center">
-      <div class="nb-dots" id="pageDots"></div>
-      <span class="nb-indicator" id="pageIndicator">1 / 5</span>
+    <div class="ctrl-center">
+      <div class="dots" id="dots" role="tablist" aria-label="Chọn trang"></div>
+      <span class="page-indicator" id="pageIndicator" aria-live="polite">1 / 5</span>
     </div>
-    <button class="nb-ctrl-btn" id="btnNext" onclick="nextPage()" title="Trang sau">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    <button class="ctrl-btn" id="btnNext" type="button" title="Trang sau" aria-label="Trang sau">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   </div>
 
-  <!-- TOC -->
-  <button class="toc-btn" id="tocBtn" onclick="toggleTOC()">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+  <button class="toc-btn" id="tocBtn" type="button" aria-label="Mở mục lục" aria-expanded="false">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     Mục lục
   </button>
-  <div class="toc-panel" id="tocPanel"></div>
-
-  <div class="swipe-hint" id="swipeHint">← Vuốt để lật trang →</div>
+  <div class="toc-panel" id="tocPanel" role="dialog" aria-label="Mục lục" hidden></div>
 
   <script src="../js/handbook.js"></script>
 </body>

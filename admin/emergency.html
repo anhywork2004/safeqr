@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' https://*.tile.openstreetmap.org; frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
+  <title>SafeQR – Bản đồ Khẩn cấp</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="dash-header">
+      <div class="dash-header-left">
+        <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="#fff" opacity="0.18"/>
+          <path d="M18 6L24 12V22L18 28L12 22V12L18 6Z" fill="white" opacity="0.9"/>
+          <path d="M18 10V18M18 18L22 14M18 18L14 14" stroke="#c62828" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="dash-header-title">SafeQR</div>
+          <div class="dash-header-sub" id="agencyNameDisplay">Bản đồ khẩn cấp</div>
+        </div>
+      </div>
+      <div class="dash-header-right">
+        <span class="dash-header-badge" id="headerBadge">🟢 Trực tuyến</span>
+        <button class="btn-logout" onclick="handleLogout()">Đăng xuất</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="dash-nav">
+      <a href="dashboard.html" class="dash-nav-btn">📋 Liên hệ</a>
+      <a href="emergency.html" class="dash-nav-btn active">🗺 Bản đồ khẩn cấp</a>
+    </nav>
+
+    <!-- Emergency Map Layout -->
+    <div class="emergency-layout">
+      <!-- Map -->
+      <div class="emergency-map-wrap">
+        <div id="emergencyMap"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="emergency-sidebar">
+        <div class="emergency-sidebar-header">
+          <h3>
+            <span class="live-dot" title="Đang theo dõi"></span>
+            Báo cáo khẩn cấp
+          </h3>
+          <span class="last-poll" id="lastPollTime">Đang kết nối...</span>
+        </div>
+        <div class="emergency-sidebar-list" id="emergencyReportList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <script src="../js/security.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-auth.js"></script>
+  <script src="../js/admin-emergency.js"></script>
+</body>
+</html>

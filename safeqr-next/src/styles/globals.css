@@ -1,0 +1,338 @@
+@import "tailwindcss";
+
+/* ============================================
+   SafeQR v2.0 — Design Tokens & Global Styles
+   ============================================ */
+
+/* --- CSS Custom Properties (Design Tokens) --- */
+:root {
+  /* Primary Red Scale */
+  --red-50: #ffebee;
+  --red-100: #ffcdd2;
+  --red-200: #ef9a9a;
+  --red-300: #e57373;
+  --red-400: #ef5350;
+  --red-500: #e53935;
+  --red-600: #c62828;
+  --red-700: #b71c1c;
+  --red-800: #931a1a;
+  --red-900: #7f0000;
+
+  /* Emergency Service Colors */
+  --medical: #e74c3c;
+  --fire: #e67e22;
+  --police: #2c3e50;
+  --electric: #f39c12;
+  --water: #3498db;
+  --ward: #9b59b6;
+
+  /* Chat Blue */
+  --chat-500: #1565c0;
+  --chat-600: #0d47a1;
+
+  /* Warm Neutrals */
+  --warm-50: #fdfaf7;
+  --warm-100: #f7f5f0;
+  --warm-200: #f0ede7;
+  --warm-300: #e8e4db;
+  --warm-400: #d4d0c8;
+  --warm-500: #b0b0aa;
+  --warm-600: #8a8a86;
+  --warm-700: #4a4a4a;
+  --warm-800: #2a2a2a;
+  --warm-900: #1c1c1c;
+
+  /* Handbook Dark Theme */
+  --hb-bg: #0e0e1c;
+  --hb-paper: #fdfaf2;
+  --hb-paper2: #f8f2e3;
+  --hb-ink: #1e1e1e;
+  --hb-ink2: #3d3d3d;
+  --hb-ink3: #5a5a5a;
+
+  /* Shadows */
+  --shadow-card: 0 4px 14px rgba(47, 30, 20, 0.06), 0 2px 6px rgba(47, 30, 20, 0.04);
+  --shadow-card-hover: 0 8px 28px rgba(47, 30, 20, 0.08), 0 3px 10px rgba(47, 30, 20, 0.05);
+  --shadow-red: 0 4px 16px rgba(183, 28, 28, 0.18);
+  --shadow-sos: 0 6px 24px rgba(183, 28, 28, 0.4);
+  --shadow-chat: 0 6px 22px rgba(21, 101, 192, 0.32);
+  --shadow-modal: 0 14px 44px rgba(47, 30, 20, 0.1);
+  --shadow-book: 0 30px 60px rgba(0, 0, 0, 0.65);
+
+  /* Timing */
+  --ease: cubic-bezier(0.25, 0.8, 0.25, 1.2);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+/* --- Tailwind v4 Theme --- */
+@theme inline {
+  --color-red-50: var(--red-50);
+  --color-red-100: var(--red-100);
+  --color-red-200: var(--red-200);
+  --color-red-300: var(--red-300);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+  --color-red-800: var(--red-800);
+  --color-red-900: var(--red-900);
+
+  --color-medical: var(--medical);
+  --color-fire: var(--fire);
+  --color-police: var(--police);
+  --color-electric: var(--electric);
+  --color-water: var(--water);
+  --color-ward: var(--ward);
+
+  --color-chat-500: var(--chat-500);
+  --color-chat-600: var(--chat-600);
+
+  --color-warm-50: var(--warm-50);
+  --color-warm-100: var(--warm-100);
+  --color-warm-200: var(--warm-200);
+  --color-warm-300: var(--warm-300);
+  --color-warm-400: var(--warm-400);
+  --color-warm-500: var(--warm-500);
+  --color-warm-600: var(--warm-600);
+  --color-warm-700: var(--warm-700);
+  --color-warm-800: var(--warm-800);
+  --color-warm-900: var(--warm-900);
+
+  --color-hb-bg: var(--hb-bg);
+  --color-hb-paper: var(--hb-paper);
+  --color-hb-paper2: var(--hb-paper2);
+  --color-hb-ink: var(--hb-ink);
+  --color-hb-ink2: var(--hb-ink2);
+  --color-hb-ink3: var(--hb-ink3);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  --font-handbook: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-handbook-mono: "JetBrains Mono", monospace;
+}
+
+/* --- Base Styles --- */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--warm-100);
+  color: var(--warm-800);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Subtle grain texture overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: radial-gradient(
+    circle at 25% 25%,
+    var(--warm-900) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 4px 4px;
+}
+
+/* --- Glass Header --- */
+.glass {
+  background: rgba(247, 245, 240, 0.82);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* --- Card Styles --- */
+.card-emergency {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  border-top: 3.5px solid var(--card-color, var(--red-600));
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  cursor: pointer;
+}
+
+.card-emergency:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.card-emergency:active {
+  transform: scale(0.97);
+}
+
+/* --- Button Base --- */
+.btn-press {
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.btn-press:hover {
+  transform: translateY(-2px);
+}
+
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* --- SOS Pulse --- */
+@keyframes sosPulse {
+  0%, 100% {
+    box-shadow: 0 6px 24px rgba(183, 28, 28, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 34px rgba(183, 28, 28, 0.6),
+                0 0 0 10px rgba(183, 28, 28, 0.08);
+  }
+}
+
+.animate-sos-pulse {
+  animation: sosPulse 2s ease-in-out infinite;
+}
+
+/* --- Slide Up --- */
+@keyframes slideUp {
+  from {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.28s var(--ease-out) forwards;
+}
+
+/* --- Fade In --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* --- Chat Panel Slide --- */
+@keyframes chatSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-chat-slide {
+  animation: chatSlideUp 0.3s var(--ease-out) forwards;
+}
+
+/* --- Modal Pop --- */
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-modal-pop {
+  animation: modalPop 0.25s var(--ease) forwards;
+}
+
+/* --- Page Content Entrance --- */
+@keyframes pageContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: pageContentIn 0.4s var(--ease-out) forwards;
+}
+
+/* --- Shimmer --- */
+@keyframes shimmer {
+  0% { left: -70%; opacity: 0; }
+  10% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { left: 130%; opacity: 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 6s ease-in-out infinite;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--warm-400);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--warm-500);
+}
+
+/* --- Selection --- */
+::selection {
+  background: rgba(183, 28, 28, 0.15);
+  color: var(--red-800);
+}
+
+/* --- Focus visible --- */
+:focus-visible {
+  outline: 2px solid var(--red-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* --- Print Styles --- */
+@media print {
+  body::before { display: none; }
+  .no-print { display: none !important; }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}

@@ -29,11 +29,22 @@ function checkAuth() {
 }
 
 function redirectLogin() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('safeqr_token');
+  } catch(e) {}
   window.location.href = 'index.html';
 }
 
 function logout() {
   sessionStorage.removeItem(SESSION_KEY);
+  try {
+    if (window.SafeQR_Security && window.SafeQR_Security.destroySession) {
+      window.SafeQR_Security.destroySession();
+    }
+    // Also clear token directly as fallback
+    localStorage.removeItem('safeqr_token');
+  } catch(e) {}
   window.location.href = 'index.html';
 }
 
@@ -142,31 +153,7 @@ async function handleSave(e) {
     return;
   }
 
-  var saved = getSavedContacts();
-  saved[session.agencyId] = {
-    phone: phone,
-    address: address,
-    mapsQuery: mapsQuery,
-    description: description,
-    _updatedAt: new Date().toISOString()
-  };
-  saveContacts(saved);
-
-  // Try API save if available
-  if (session.useApi) {
-    var apiResult = await apiUpdateContact(session.agencyId, {
-      phone: phone,
-      address: address,
-      maps_query: mapsQuery,
-      description: description
-    });
-    if (apiResult) {
-      console.log('API save successful');
-    } else {
-      console.warn('API save failed, saved locally only');
-    }
-  }
-
+  // Validate password BEFORE saving contact data
   if (newPassword) {
     if (newPassword.length < 4) {
       showToast('Mật khẩu phải có ít nhất 4 ký tự', true);
@@ -184,6 +171,34 @@ async function handleSave(e) {
     }
     savePassword(session.agencyId, newPassword);
     document.getElementById('newPassword').value = '';
+  }
+
+  // Save contact data (localStorage + optional API)
+  var saved = getSavedContacts();
+  saved[session.agencyId] = {
+    phone: phone,
+    address: address,
+    mapsQuery: mapsQuery,
+    description: description,
+    _updatedAt: new Date().toISOString()
+  };
+  saveContacts(saved);
+
+  if (session.useApi) {
+    var apiResult = await apiUpdateContact(session.agencyId, {
+      phone: phone,
+      address: address,
+      maps_query: mapsQuery,
+      description: description
+    });
+    if (apiResult) {
+      console.log('API save successful');
+    } else {
+      console.warn('API save failed, saved locally only');
+    }
+  }
+
+  if (newPassword) {
     showToast('Đã lưu thông tin và đổi mật khẩu thành công!');
   } else {
     showToast('Đã lưu thông tin thành công!');
@@ -221,7 +236,7 @@ function findContact(agencyId) {
 
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function showToast(msg, isError) {
