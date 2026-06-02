@@ -8,6 +8,7 @@ pages_build_output_dir = "."
 binding = "DB"
 database_name = "safeqr-db"
 database_id = "84fdde68-9ad6-4291-a486-bccbed425b3f"
+migrations_dir = "worker/migrations"
 
 [vars]
 JWT_SECRET = "safeqr-jwt-secret-2026"

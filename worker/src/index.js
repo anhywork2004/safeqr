@@ -61,7 +61,7 @@ function corsHeaders(request) {
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...SECURITY_HEADERS },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...SECURITY_HEADERS },
   });
 }
 
@@ -299,7 +299,7 @@ async function router(request, env) {
     if (!rl.allowed) {
       return new Response(JSON.stringify({ error: 'Too many login attempts', retryAfter: rl.retryAfter }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': String(rl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': String(rl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
       });
     }
   }
@@ -308,7 +308,7 @@ async function router(request, env) {
     if (!rl.allowed) {
       return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: rl.retryAfter }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': String(rl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': String(rl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
       });
     }
   }
@@ -316,7 +316,7 @@ async function router(request, env) {
   if (!grl.allowed) {
     return new Response(JSON.stringify({ error: 'Too many requests', retryAfter: grl.retryAfter }), {
       status: 429,
-      headers: { 'Content-Type': 'application/json', 'Retry-After': String(grl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': String(grl.retryAfter), ...SECURITY_HEADERS, ...corsHeaders(request) },
     });
   }
 

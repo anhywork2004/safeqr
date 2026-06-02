@@ -389,7 +389,7 @@ export function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
       ...securityHeaders(),
       ...corsHeaders(),
       ...extraHeaders,

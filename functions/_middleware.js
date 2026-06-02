@@ -189,7 +189,7 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         ...SECURITY_HEADERS,
         ...corsHeaders(request),
         'Allow': 'GET, POST, PUT, DELETE, HEAD, OPTIONS',
@@ -204,7 +204,7 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ error: 'Bad request' }), {
       status: 400,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         ...SECURITY_HEADERS,
         ...corsHeaders(request),
       },
@@ -225,7 +225,7 @@ export async function onRequest(context) {
         {
           status: 429,
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
             'Retry-After': String(authLimit.retryAfter),
             ...SECURITY_HEADERS,
             ...corsHeaders(request),
@@ -247,7 +247,7 @@ export async function onRequest(context) {
         {
           status: 429,
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
             'Retry-After': String(pwLimit.retryAfter),
             ...SECURITY_HEADERS,
             ...corsHeaders(request),
@@ -268,7 +268,7 @@ export async function onRequest(context) {
       {
         status: 429,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
           'Retry-After': String(generalLimit.retryAfter),
           ...SECURITY_HEADERS,
           ...corsHeaders(request),
@@ -289,7 +289,7 @@ export async function onRequest(context) {
         {
           status: 413,
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json; charset=utf-8',
             ...SECURITY_HEADERS,
             ...corsHeaders(request),
           },
@@ -335,7 +335,7 @@ export async function onRequest(context) {
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
           ...SECURITY_HEADERS,
           ...corsHeaders(request),
         },

@@ -32,14 +32,14 @@ INSERT OR IGNORE INTO contacts (id, name, phone, address, maps_query, icon, colo
 ('water', 'Cấp nước', '19001047', 'Công ty Cấp nước Thủ Đức\nSố 2 Đường số 8, P. Linh Xuân', 'Công ty Cấp nước Thủ Đức', '💧', '#3498db', 'Báo vỡ đường ống, rò rỉ nước, mất nước đột ngột.'),
 ('ward', 'Đường dây nóng UBND phường', '19001133', 'UBND phường sở tại\nLiên hệ theo địa bàn cư trú', 'UBND phường gần nhất', '🆘', '#9b59b6', 'Phản ánh khẩn cấp về an ninh trật tự, sự cố hạ tầng, cứu trợ.');
 
--- Default passwords (plain text for initial — will be replaced with hashed versions)
+-- Default passwords (SHA-256 hashed — auto-upgraded to PBKDF2 on first login)
 INSERT OR IGNORE INTO passwords (agency_id, password_hash) VALUES
-('medical', 'medical2024'),
-('fire', 'fire2024'),
-('police', 'police2024'),
-('electricity', 'electricity2024'),
-('water', 'water2024'),
-('ward', 'ward2024');
+('medical', 'cHTwoXqVsBOmC2C0Rs8OIlNaHFLgWpiNzM3qxI6LElw='),
+('fire', '2Dfz//Vwdw9oqx7iAbk62G0kfmU8jO84XF44PXjJk/A='),
+('police', 'jfH6YhfMhvI6SrbuAQmXmGp8z0TEBfT0IY/bU1lk5aA='),
+('electricity', 'EqakHeZsg3TVutaxx9NtYvZKjelGCsfkksFicw5nWzE='),
+('water', 'NOwLZhSCzY1vMcqrWvDt2s9YfQzs29THKtN6dbNtaAc='),
+('ward', 'Z8rlD/aEGFO2EgxY3gIGSzp7Udxh8BolERcoFayr04o=');
 
 -- Site config
 INSERT OR IGNORE INTO site_config (key, value) VALUES

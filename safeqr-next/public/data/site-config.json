@@ -1,7 +1,20 @@
 {
   "appName": "SafeQR – QR Khẩn Cấp",
-  "tagline": "Quét nhanh, hỗ trợ kịp thời",
+  "shortName": "SafeQR",
+  "tagline": "An toàn trong tầm tay — Một chạm, cứu mạng",
+  "description": "Nền tảng QR Code khẩn cấp — Kết nối nhanh dịch vụ cứu hộ, cứu nạn, cấp cứu tại TP. Thủ Đức, TP. Hồ Chí Minh",
   "locality": "TP. Thủ Đức, TP. Hồ Chí Minh",
+  "defaultWardId": "hiep-phu",
   "sosPhone": "112",
-  "version": "1.0.0"
+  "version": "2.0.0",
+  "hotlineNumbers": [
+    { "number": "115", "label": "Cấp cứu", "color": "#e74c3c" },
+    { "number": "114", "label": "Cứu hỏa", "color": "#e67e22" },
+    { "number": "113", "label": "Công an", "color": "#2c3e50" }
+  ],
+  "meta": {
+    "language": "vi-VN",
+    "themeColor": "#b71c1c",
+    "backgroundColor": "#f7f5f0"
+  }
 }
