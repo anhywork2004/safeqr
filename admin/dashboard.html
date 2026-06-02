@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <title>SafeQR – Bảng điều khiển</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="dash-header">
+      <div class="dash-header-left">
+        <svg width="32" height="32" viewBox="0 0 36 36">
+          <rect width="36" height="36" rx="8" fill="#c62828"/>
+          <path d="M18 6L24 12V22L18 28L12 22V12L18 6Z" fill="white" opacity="0.9"/>
+        </svg>
+        <div>
+          <strong>SafeQR Admin</strong>
+          <span id="agencyLabel" class="dash-agency-label"></span>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Đăng xuất</button>
+    </header>
+
+    <!-- Main -->
+    <main class="dash-main">
+      <div class="dash-card">
+        <h2>Cập nhật thông tin liên hệ</h2>
+        <p class="dash-card-sub">Thay đổi sẽ hiển thị ngay trên trang QR Khẩn Cấp</p>
+
+        <form id="editForm" autocomplete="off">
+          <div class="form-field">
+            <label for="phone">Số điện thoại</label>
+            <input type="text" id="phone" required placeholder="VD: 115">
+          </div>
+
+          <div class="form-field">
+            <label for="address">Địa chỉ</label>
+            <textarea id="address" rows="2" placeholder="Nhập địa chỉ đơn vị"></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="mapsQuery">Từ khóa Google Maps</label>
+            <input type="text" id="mapsQuery" placeholder="VD: Bệnh viện Đa khoa Thủ Đức">
+            <span class="form-hint">Dùng để tìm đường chính xác trên Google Maps</span>
+          </div>
+
+          <div class="form-field">
+            <label for="description">Mô tả thêm</label>
+            <textarea id="description" rows="2" placeholder="VD: Gọi khi có tai nạn, đột quỵ..."></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="newPassword">Đổi mật khẩu <span style="font-weight:400;color:#999;">(để trống nếu không đổi)</span></label>
+            <input type="password" id="newPassword" placeholder="Mật khẩu mới">
+          </div>
+
+          <div class="dash-actions">
+            <button type="submit" class="btn-save">Lưu thay đổi</button>
+            <button type="button" class="btn-reset" onclick="resetToDefault()">Khôi phục mặc định</button>
+          </div>
+        </form>
+
+        <div class="last-updated" id="lastUpdated"></div>
+      </div>
+
+      <!-- Preview -->
+      <div class="dash-card">
+        <h3>Xem trước trên trang khẩn cấp</h3>
+        <div class="preview-card" id="previewCard"></div>
+        <a href="../index.html" class="btn-preview-link" target="_blank">🔗 Mở trang khẩn cấp thực tế →</a>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/admin-dash.js"></script>
+</body>
+</html>

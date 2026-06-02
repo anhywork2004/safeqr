@@ -1,0 +1,25 @@
+{
+  "name": "SafeQR – QR Khẩn Cấp",
+  "short_name": "SafeQR",
+  "description": "Kết nối nhanh dịch vụ cứu hộ, cứu nạn, cấp cứu",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#c62828",
+  "theme_color": "#c62828",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

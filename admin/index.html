@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <title>SafeQR – Đăng nhập Quản lý</title>
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="48" height="48" viewBox="0 0 36 36">
+          <rect width="36" height="36" rx="8" fill="#c62828"/>
+          <path d="M18 6L24 12V22L18 28L12 22V12L18 6Z" fill="white" opacity="0.9"/>
+          <path d="M18 10V18M18 18L22 14M18 18L14 14" stroke="#c62828" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="login-title">Quản lý SafeQR</h1>
+      <p class="login-sub">Dành cho cơ quan nhà nước cập nhật thông tin liên hệ khẩn cấp</p>
+
+      <form class="login-form" id="loginForm" autocomplete="off">
+        <div class="form-field">
+          <label for="agency">Đơn vị</label>
+          <select id="agency" required>
+            <option value="">— Chọn đơn vị —</option>
+            <option value="medical">🚑 Cấp cứu y tế</option>
+            <option value="fire">🚒 Cảnh sát PCCC & CNCH</option>
+            <option value="police">👮 Công an địa phương</option>
+            <option value="electricity">⚡ Điện lực</option>
+            <option value="water">💧 Cấp nước</option>
+            <option value="ward">🆘 Đường dây nóng UBND phường</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" placeholder="Nhập mật khẩu được cấp" required>
+        </div>
+
+        <button type="submit" class="btn-login">Đăng nhập</button>
+      </form>
+
+      <div class="login-hint">
+        <p>Mật khẩu mặc định: <code>tên-đơn-vị</code> + <code>2024</code></p>
+        <p>VD: <code>medical2024</code>, <code>fire2024</code></p>
+        <p style="margin-top:8px;font-size:0.7rem;opacity:0.6;">Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu.</p>
+      </div>
+
+      <a href="../index.html" class="back-link">← Về trang khẩn cấp</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/admin-auth.js"></script>
+</body>
+</html>

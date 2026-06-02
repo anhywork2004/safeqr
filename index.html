@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#c62828">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SafeQR">
+  <meta name="description" content="QR Khẩn Cấp – Kết nối nhanh dịch vụ cứu hộ, cứu nạn, cấp cứu. Không cần cài app.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <title>SafeQR – QR Khẩn Cấp</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="8" fill="#c62828"/>
+          <path d="M18 6L24 12V22L18 28L12 22V12L18 6Z" fill="white" opacity="0.9"/>
+          <path d="M18 10V18M18 18L22 14M18 18L14 14" stroke="#c62828" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h1 class="logo-text">SafeQR</h1>
+          <p class="logo-sub">QR Khẩn Cấp</p>
+        </div>
+      </div>
+      <span class="header-badge">v1.0</span>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h2 class="hero-title">Quét nhanh<br>Hỗ trợ kịp thời</h2>
+      <p class="hero-desc">Kết nối ngay với dịch vụ cứu hộ, cứu nạn & cấp cứu trên địa bàn <strong id="locality"></strong></p>
+      <div class="hero-hotlines">
+        <button onclick="handleCall('115','Cấp cứu y tế','#e74c3c')" class="hotline-btn hotline-medical">
+          <span class="hotline-num">115</span>
+          <span class="hotline-label">Cấp cứu</span>
+        </button>
+        <button onclick="handleCall('114','Cảnh sát PCCC & CNCH','#e67e22')" class="hotline-btn hotline-fire">
+          <span class="hotline-num">114</span>
+          <span class="hotline-label">Cứu hỏa</span>
+        </button>
+        <button onclick="handleCall('113','Công an địa phương','#2c3e50')" class="hotline-btn hotline-police">
+          <span class="hotline-num">113</span>
+          <span class="hotline-label">Công an</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Grid -->
+  <main class="main-content">
+    <div class="section-header">
+      <h3>Danh sách liên hệ khẩn cấp</h3>
+      <p>Chạm vào nút bên dưới để gọi hoặc chỉ đường ngay</p>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </main>
+
+  <!-- Extra Numbers -->
+  <section class="extra-section">
+    <details class="extra-details">
+      <summary class="extra-summary">📋 Xem thêm số điện thoại khẩn cấp khác</summary>
+      <ul class="extra-list" id="extraList"></ul>
+    </details>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>SafeQR – Mô hình chuyển đổi số cộng đồng</p>
+    <p class="footer-meta">Phiên bản 1.0 · Không cần cài ứng dụng · Chi phí 0đ</p>
+    <p class="footer-links">
+      <a href="qr/index.html">Tạo mã QR</a>
+      <a href="admin/index.html" class="btn-admin-link">Đăng nhập quản lý</a>
+    </p>
+  </footer>
+
+  <!-- SOS Floating Button -->
+  <div class="sos-container" id="sosContainer">
+    <button class="sos-btn" id="sosBtn" title="Gọi khẩn cấp 112">
+      <span class="sos-icon">SOS</span>
+    </button>
+    <div class="sos-actions" id="sosActions">
+      <button class="sos-action call" onclick="handleCall('112','Tổng đài khẩn cấp quốc gia','#c62828')">
+        <span>📞</span> Gọi 112
+      </button>
+      <button class="sos-action share" onclick="shareLocation()">
+        <span>📍</span> Gửi vị trí
+      </button>
+      <button class="sos-action cancel" onclick="toggleSOS()">
+        <span>✕</span> Đóng
+      </button>
+    </div>
+  </div>
+
+  <!-- Desktop Phone Modal -->
+  <div class="phone-modal-overlay" id="phoneModal" onclick="closePhoneModalOnOverlay(event)">
+    <div class="phone-modal" onclick="event.stopPropagation()">
+      <div class="phone-modal-icon" id="phoneModalIcon"></div>
+      <h3 class="phone-modal-name" id="phoneModalName"></h3>
+      <div class="phone-modal-number" id="phoneModalNumber"></div>
+      <p class="phone-modal-hint">Thiết bị của bạn không hỗ trợ gọi điện.<br>Sao chép số và gọi bằng điện thoại.</p>
+      <div class="phone-modal-actions">
+        <button class="phone-modal-copy" onclick="copyPhoneNumber()">📋 Sao chép số</button>
+        <button class="phone-modal-close" onclick="closePhoneModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

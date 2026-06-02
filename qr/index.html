@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <title>SafeQR – Tạo mã QR Khẩn Cấp</title>
+  <style>
+    :root {
+      --red: #c62828;
+      --red-dark: #b71c1c;
+      --bg: #fafafa;
+      --card-bg: #fff;
+      --text: #212121;
+      --text-secondary: #616161;
+      --radius: 14px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--red);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-family: var(--font);
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--red);
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary:active { opacity: 0.8; transform: scale(0.96); }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      color: var(--red);
+      border: 1.5px solid var(--red);
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn-outline:active { background: var(--red); color: #fff; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+    .result-area {
+      margin-top: 28px;
+      text-align: center;
+      display: none;
+    }
+    .result-area.visible { display: block; }
+
+    #qrCanvas { max-width: 100%; height: auto; }
+
+    .sticker-preview {
+      display: none;
+      margin: 24px auto 0;
+      background: #fff;
+      border: 2px dashed #ccc;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 380px;
+      text-align: center;
+    }
+    .sticker-preview.visible { display: block; }
+    .sticker-preview h4 {
+      font-size: 0.85rem;
+      color: var(--red);
+      margin: 10px 0 4px;
+    }
+    .sticker-preview p {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .back-link, .page-title, .page-sub, .form-group, .actions, .btn-primary, .btn-outline { display: none; }
+      .sticker-preview {
+        display: block !important;
+        border: none;
+        page-break-after: always;
+        margin: 0;
+        padding: 10mm;
+        max-width: 100%;
+      }
+      .result-area { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <a href="../index.html" class="back-link">← Quay lại trang khẩn cấp</a>
+
+  <h1 class="page-title">Tạo mã QR Khẩn Cấp</h1>
+  <p class="page-sub">Nhập đường dẫn trang khẩn cấp của địa phương bạn để tạo QR sticker.</p>
+
+  <div class="form-group">
+    <label for="qrUrl">URL trang khẩn cấp</label>
+    <input type="url" id="qrUrl" placeholder="https://safeqr.example.com" value="">
+  </div>
+
+  <div class="form-group">
+    <label for="qrSize">Kích thước QR (px)</label>
+    <select id="qrSize">
+      <option value="256">256px — Dán trong nhà</option>
+      <option value="320" selected>320px — Bảng thông báo</option>
+      <option value="400">400px — Áp phích lớn</option>
+      <option value="512">512px — In chất lượng cao</option>
+    </select>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" onclick="generateQR()">✨ Tạo mã QR</button>
+    <button class="btn-outline" onclick="downloadQR()" style="display:none" id="btnDownload">📥 Tải ảnh PNG</button>
+    <button class="btn-outline" onclick="window.print()" style="display:none" id="btnPrint">🖨 In sticker</button>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <canvas id="qrCanvas"></canvas>
+  </div>
+
+  <div class="sticker-preview" id="stickerPreview">
+    <canvas id="qrCanvasPrint"></canvas>
+    <h4>QR KHẨN CẤP – QUÉT KHI CẦN HỖ TRỢ</h4>
+    <p>📞 115 Cấp cứu · 114 Cứu hỏa · 113 Công an</p>
+    <p>📍 Chỉ đường nhanh · Không cần cài ứng dụng</p>
+    <p style="margin-top:6px; font-weight:600;">SafeQR – Quét nhanh, hỗ trợ kịp thời</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script>
+    document.getElementById('qrUrl').value = window.location.origin + window.location.pathname.replace(/qr\/.*/, '');
+
+    function generateQR() {
+      const url = document.getElementById('qrUrl').value.trim();
+      if (!url) { alert('Vui lòng nhập URL'); return; }
+
+      const size = parseInt(document.getElementById('qrSize').value);
+
+      try {
+        const typeNumber = 6;
+        const errorCorrectionLevel = 'M';
+        const qr = qrcode(typeNumber, errorCorrectionLevel);
+        qr.addData(url);
+        qr.make();
+
+        const cellSize = Math.floor(size / qr.getModuleCount());
+        const canvasSize = cellSize * qr.getModuleCount();
+        const canvas = document.getElementById('qrCanvas');
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        const ctx = canvas.getContext('2d');
+
+        const padding = cellSize * 4;
+        canvas.width += padding * 2;
+        canvas.height += padding * 2;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#c62828';
+
+        for (let row = 0; row < qr.getModuleCount(); row++) {
+          for (let col = 0; col < qr.getModuleCount(); col++) {
+            if (qr.isDark(row, col)) {
+              ctx.fillRect(
+                padding + col * cellSize,
+                padding + row * cellSize,
+                cellSize,
+                cellSize
+              );
+            }
+          }
+        }
+
+        document.getElementById('resultArea').classList.add('visible');
+        document.getElementById('btnDownload').style.display = '';
+        document.getElementById('btnPrint').style.display = '';
+
+        // Also render for print sticker
+        const pCanvas = document.getElementById('qrCanvasPrint');
+        const pCtx = pCanvas.getContext('2d');
+        pCanvas.width = 200;
+        pCanvas.height = 200;
+        const pCellSize = Math.floor(200 / qr.getModuleCount());
+        const pSize = pCellSize * qr.getModuleCount();
+        const pPad = (200 - pSize) / 2;
+        pCtx.fillStyle = '#fff';
+        pCtx.fillRect(0, 0, 200, 200);
+        pCtx.fillStyle = '#c62828';
+        for (let row = 0; row < qr.getModuleCount(); row++) {
+          for (let col = 0; col < qr.getModuleCount(); col++) {
+            if (qr.isDark(row, col)) {
+              pCtx.fillRect(pPad + col * pCellSize, pPad + row * pCellSize, pCellSize, pCellSize);
+            }
+          }
+        }
+        document.getElementById('stickerPreview').classList.add('visible');
+
+      } catch(e) {
+        alert('Lỗi tạo QR: ' + e.message);
+        console.error(e);
+      }
+    }
+
+    function downloadQR() {
+      const canvas = document.getElementById('qrCanvas');
+      const link = document.createElement('a');
+      link.download = 'SafeQR-Emergency.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+</body>
+</html>
