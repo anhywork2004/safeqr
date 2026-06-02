@@ -309,6 +309,7 @@ body {
 .notebook-scene.is-open .notebook-open {
   opacity: 1; pointer-events: auto;
   max-height: 900px;
+  height: var(--nb-h);
   transform: scale(1) perspective(1200px) rotateX(2deg);
   overflow: visible;
 }
