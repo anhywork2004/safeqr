@@ -425,6 +425,22 @@ body { max-width: var(--max-width); }
   width: 11px;
   height: 11px;
 }
+.loc-dot.denied {
+  background: #ff9800;
+  box-shadow: 0 0 8px rgba(255,152,0,0.6);
+  width: 11px;
+  height: 11px;
+}
+.location-banner.error {
+  background: rgba(255,152,0,0.15);
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,152,0,0.3);
+  cursor: pointer;
+}
+.location-banner.error:hover {
+  background: rgba(255,152,0,0.25);
+  border-color: rgba(255,152,0,0.5);
+}
 @media (max-width: 420px) {
   .location-banner {
     font-size: 0.72rem;

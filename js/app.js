@@ -141,9 +141,27 @@ async function getDetailedPosition() {
         resolve(_userLocation);
       },
       function(err) {
-        console.warn('[Location] GPS error:', err.message);
+        console.warn('[Location] GPS error:', err && err.message);
         var cached = _loadCachedLocation();
         _geoPending = false;
+
+        // Show error state in UI
+        var el = document.getElementById('userLocation');
+        if (el) {
+          if (err && err.code === 1) {
+            // PERMISSION_DENIED
+            el.innerHTML = '<span class="loc-dot denied"></span><span class="loc-text">📍 Vui lòng cấp quyền vị trí trong trình duyệt</span>';
+          } else if (err && err.code === 2) {
+            // POSITION_UNAVAILABLE
+            el.innerHTML = '<span class="loc-dot denied"></span><span class="loc-text">📍 Không thể xác định vị trí</span>';
+          } else if (err && err.code === 3) {
+            // TIMEOUT
+            el.innerHTML = '<span class="loc-dot denied"></span><span class="loc-text">📍 Quá thời gian định vị, thử lại</span>';
+          } else {
+            el.innerHTML = '<span class="loc-dot denied"></span><span class="loc-text">📍 Không định vị được, chạm để thử lại</span>';
+          }
+          el.className = 'location-banner error';
+        }
         resolve(cached);
       },
       {
@@ -194,10 +212,79 @@ function updateLocationDisplay() {
     }
     el.innerHTML = '<span class="loc-dot active"></span><span class="loc-label">📍 Bạn đang ở gần</span> <strong>' + escapeHtml(short) + '</strong>';
     el.className = 'location-banner located';
+
+    // Also update the hero locality text from GPS address
+    updateHeroLocality(addr);
   } else {
     el.innerHTML = '<span class="loc-dot active"></span><span class="loc-text">📍 ' +
       _userLocation.lat.toFixed(5) + ', ' + _userLocation.lng.toFixed(5) + '</span>';
     el.className = 'location-banner coords-only';
+  }
+}
+
+/**
+ * Extract district/city level from full address and update the hero-desc locality span.
+ * E.g., "64 Lê Văn Việt, P. Hiệp Phú, TP. Thủ Đức, TP. Hồ Chí Minh, Vietnam"
+ * → "P. Hiệp Phú, TP. Thủ Đức, TP. Hồ Chí Minh"
+ */
+function updateHeroLocality(address) {
+  var localityEl = document.getElementById('locality');
+  if (!localityEl || !address) return;
+
+  var parts = address.split(',').map(function(p) { return p.trim(); });
+
+  // Filter to only administrative units (skip street numbers, Vietnam country name)
+  var adminKeywords = ['tp.', 'thành phố', 'quận', 'huyện', 'phường', 'xã', 'thị trấn',
+                       'thị xã', 'p.', 'q.', 'h.', 'tx.'];
+  var adminParts = [];
+  for (var i = 0; i < parts.length; i++) {
+    var lower = parts[i].toLowerCase();
+    // Skip pure street addresses (contain numbers at start or are just road names)
+    // Skip "Vietnam" / "Việt Nam"
+    if (lower === 'vietnam' || lower === 'việt nam') continue;
+
+    var isAdmin = false;
+    for (var j = 0; j < adminKeywords.length; j++) {
+      if (lower.indexOf(adminKeywords[j]) === 0) {
+        isAdmin = true;
+        break;
+      }
+    }
+    // Also include parts that look like district/city names (short, no house numbers)
+    if (isAdmin || (parts[i].length > 2 && !/^\d/.test(parts[i]) && adminParts.length > 0)) {
+      adminParts.push(parts[i]);
+    }
+  }
+
+  // Take the most relevant parts (last 2-3 admin units)
+  var locality;
+  if (adminParts.length >= 2) {
+    // Take the last 2-3 that are most relevant (city/district level)
+    var relevant = [];
+    for (var k = 0; k < adminParts.length; k++) {
+      var l = adminParts[k].toLowerCase();
+      if (l.indexOf('tp.') === 0 || l.indexOf('thành phố') === 0 ||
+          l.indexOf('quận') === 0 || l.indexOf('huyện') === 0 ||
+          l.indexOf('thị xã') === 0 || l.indexOf('tỉnh') === 0) {
+        relevant.push(adminParts[k]);
+      }
+    }
+    // If not enough city-level parts, include ward/commune level
+    if (relevant.length < 2) {
+      relevant = adminParts.slice(-3);
+    }
+    locality = relevant.slice(-3).join(', ');
+  } else if (adminParts.length === 1) {
+    locality = adminParts[0];
+  } else {
+    // Fallback: take last 2-3 comma parts
+    locality = parts.slice(-3).filter(function(p) {
+      return p.toLowerCase() !== 'vietnam' && p.toLowerCase() !== 'việt nam';
+    }).join(', ');
+  }
+
+  if (locality && locality.length > 3) {
+    localityEl.textContent = locality;
   }
 }
 
