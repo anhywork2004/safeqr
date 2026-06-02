@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <title>SafeQR – Quản lý Bảng Tin</title>
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .news-editor { margin-top: 20px; }
+    .news-editor textarea { min-height: 150px; }
+    .news-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .news-item {
+      background: #fff;
+      border: 1px solid var(--border-alt);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .news-item-info { flex: 1; min-width: 0; }
+    .news-item-title { font-weight: 700; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .news-item-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
+    .news-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm {
+      padding: 6px 12px;
+      border-radius: 16px;
+      border: 1px solid #ddd;
+      background: #fff;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all var(--ease);
+    }
+    .btn-sm.danger { color: #c62828; border-color: #ffcdd2; }
+    .btn-sm.danger:hover { background: #c62828; color: #fff; border-color: #c62828; }
+    .btn-sm.primary { color: #1565c0; border-color: #bbdefb; }
+    .btn-sm.primary:hover { background: #1565c0; color: #fff; border-color: #1565c0; }
+    .pinned-marker { color: var(--red); font-weight: 700; font-size: 0.65rem; }
+    .status-draft { color: #f39c12; }
+    .status-published { color: #27ae60; }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header class="dash-header">
+      <div class="dash-header-left">
+        <svg width="32" height="32" viewBox="0 0 36 36">
+          <rect width="36" height="36" rx="8" fill="#c62828"/>
+          <path d="M18 6L24 12V22L18 28L12 22V12L18 6Z" fill="white" opacity="0.9"/>
+        </svg>
+        <div>
+          <strong>Quản lý Bảng Tin</strong>
+          <span id="agencyLabel" class="dash-agency-label"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="dashboard.html" class="btn-logout" style="text-decoration:none;">← Dashboard</a>
+        <button class="btn-logout" onclick="logout()">Đăng xuất</button>
+      </div>
+    </header>
+
+    <main class="dash-main" style="display:block;max-width:740px;margin:0 auto;padding:20px 16px;">
+      <!-- Create/Edit Form -->
+      <div class="dash-card">
+        <h2 id="formTitle">📝 Đăng bài mới</h2>
+        <form id="newsForm" autocomplete="off">
+          <input type="hidden" id="editId" value="">
+          <div class="form-field">
+            <label for="newsTitle">Tiêu đề <span style="color:#c62828">*</span></label>
+            <input type="text" id="newsTitle" placeholder="Nhập tiêu đề bài viết" required maxlength="200">
+          </div>
+          <div class="form-field">
+            <label for="newsCategory">Danh mục</label>
+            <select id="newsCategory">
+              <option value="general">📌 Chung</option>
+              <option value="safety">🛡️ An toàn</option>
+              <option value="health">🏥 Y tế</option>
+              <option value="traffic">🚗 Giao thông</option>
+              <option value="weather">🌦 Thời tiết</option>
+              <option value="other">📋 Khác</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="newsSummary">Tóm tắt</label>
+            <textarea id="newsSummary" rows="2" placeholder="Tóm tắt ngắn (hiển thị trong danh sách)"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="newsContent">Nội dung <span style="color:#c62828">*</span></label>
+            <textarea id="newsContent" rows="5" placeholder="Nhập nội dung bài viết..." required></textarea>
+          </div>
+          <div class="form-field">
+            <label for="newsImageUrl">Link ảnh (nếu có)</label>
+            <input type="url" id="newsImageUrl" placeholder="https://...">
+          </div>
+          <div class="form-field" style="display:flex;align-items:center;gap:16px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="newsIsPinned"> 📌 Ghim lên đầu
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="newsIsPublished" checked> ✅ Xuất bản
+            </label>
+          </div>
+          <div class="dash-actions">
+            <button type="submit" class="btn-save" id="submitBtn">📋 Đăng bài</button>
+            <button type="button" class="btn-reset" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">Hủy sửa</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Posts List -->
+      <div class="dash-card">
+        <h2>📋 Danh sách bài đăng</h2>
+        <div class="news-list" id="newsList">
+          <p style="color:var(--text-muted);font-size:0.82rem;">Đang tải...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-auth.js"></script>
+  <script src="../js/admin-dash.js"></script>
+  <script src="../js/admin-news.js"></script>
+</body>
+</html>

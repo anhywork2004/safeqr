@@ -1,0 +1,185 @@
+{
+  "bookTitle": "Sổ tay Sơ cứu",
+  "bookSubtitle": "Hướng dẫn sơ cứu cơ bản cho mọi tình huống khẩn cấp",
+  "totalSpreads": 6,
+  "topics": [
+    {
+      "num": "01",
+      "icon": "🔥",
+      "accent": "#e74c3c",
+      "title": "Sơ cứu khi bị bỏng",
+      "items": [
+        "Làm mát vết bỏng dưới vòi nước sạch 15-20 phút – không dùng nước đá",
+        "Tháo bỏ quần áo, trang sức quanh vùng bỏng trước khi sưng tấy",
+        "Che vết bỏng bằng gạc sạch hoặc màng bọc thực phẩm",
+        "Không bôi kem đánh răng, dầu, mỡ trăn, nước mắm lên vết bỏng",
+        "Không làm vỡ các nốt phồng rộp – dễ gây nhiễm trùng",
+        "Bỏng rộng hơn lòng bàn tay hoặc ở mặt, khớp, bộ phận sinh dục: đến viện ngay"
+      ],
+      "call": "Gọi 115 nếu bỏng nặng, diện rộng"
+    },
+    {
+      "num": "02",
+      "icon": "🧯",
+      "accent": "#e67e22",
+      "title": "Thoát hiểm khi cháy",
+      "items": [
+        "Bò thấp dưới khói – khói bay lên cao, không khí sạch ở dưới thấp",
+        "Dùng khăn ướt che mũi miệng để lọc khói độc",
+        "Kiểm tra cửa: sờ mu bàn tay vào cửa. Nóng = không mở",
+        "Thoát theo lối thoát hiểm, không dùng thang máy",
+        "Bị kẹt: bịt khe cửa bằng vải ướt, gọi 114 và báo vị trí",
+        "Ra ngoài an toàn: không quay vào lấy đồ"
+      ],
+      "fast": [
+        "Gọi 114 ngay khi phát hiện cháy",
+        "Bò thấp – khăn ướt – thoát nhanh",
+        "Không thang máy – không quay lại"
+      ],
+      "call": "Gọi 114 – Cảnh sát PCCC"
+    },
+    {
+      "num": "03",
+      "icon": "🧠",
+      "accent": "#c62828",
+      "title": "Nhận biết đột quỵ – FAST",
+      "items": [
+        "F (Face – Mặt): cười méo, một bên mặt rủ xuống",
+        "A (Arms – Tay): yếu/tê một bên, không nâng được cả hai tay",
+        "S (Speech – Nói): nói khó, nói ngọng, không hiểu lời",
+        "T (Time – Thời gian): gọi 115 NGAY LẬP TỨC"
+      ],
+      "tips": "Để nạn nhân nằm nghiêng an toàn. Không cho ăn uống. Ghi nhớ giờ khởi phát.",
+      "numbers": [
+        { "label": "Cấp cứu", "num": "115", "color": "#e74c3c" }
+      ],
+      "call": "Mỗi phút trôi qua, 2 triệu neuron chết đi. Gọi 115 ngay!"
+    },
+    {
+      "num": "04",
+      "icon": "🚗",
+      "accent": "#2c3e50",
+      "title": "Tai nạn giao thông",
+      "items": [
+        "Đảm bảo an toàn hiện trường – bật hazard lights, đặt cảnh báo",
+        "Gọi 115 (cấp cứu) và 113 (công an)",
+        "Không di chuyển nạn nhân nếu không có nguy cơ cháy nổ",
+        "Cầm máu vết thương hở bằng vải sạch, ấn chặt liên tục",
+        "Giữ ấm và trấn an nạn nhân trong lúc chờ xe cấp cứu"
+      ],
+      "numbers": [
+        { "label": "Cấp cứu", "num": "115", "color": "#e74c3c" },
+        { "label": "Công an", "num": "113", "color": "#2c3e50" }
+      ],
+      "call": "Gọi 115 và 113 khi có tai nạn"
+    },
+    {
+      "num": "05",
+      "icon": "❤️",
+      "accent": "#e74c3c",
+      "title": "CPR – Ép tim ngoài lồng ngực",
+      "items": [
+        "1. Kiểm tra an toàn & gọi 115",
+        "2. Kiểm tra phản ứng: lay gọi nạn nhân to",
+        "3. Mở đường thở: ngửa đầu, nâng cằm",
+        "4. Ép tim: 2 tay chồng lên giữa ngực, ấn sâu 5–6 cm",
+        "5. Tốc độ: 100–120 lần/phút – theo nhịp bài Stayin' Alive"
+      ],
+      "tips": "Thổi ngạt (nếu được đào tạo): 30 ép tim → 2 thổi ngạt. Tiếp tục cho đến khi xe cấp cứu đến.",
+      "fast": [
+        "Gọi 115",
+        "Ép tim 100-120/phút",
+        "Sâu 5-6cm",
+        "Không dừng"
+      ],
+      "numbers": [
+        { "label": "Cấp cứu", "num": "115", "color": "#e74c3c" }
+      ],
+      "call": "Tiếp tục CPR đến khi xe cấp cứu tới – đừng dừng lại!"
+    },
+    {
+      "num": "06",
+      "icon": "⚡",
+      "accent": "#f39c12",
+      "title": "Sơ cứu điện giật",
+      "items": [
+        "NGẮT NGUỒN ĐIỆN trước khi tiếp cận (cầu dao, aptomat)",
+        "Không ngắt được: dùng vật khô không dẫn điện đẩy nạn nhân ra",
+        "Không chạm trực tiếp vào nạn nhân khi chưa ngắt điện",
+        "Kiểm tra hô hấp & mạch – CPR ngay nếu cần",
+        "Gọi 115. Bỏng điện có thể sâu hơn nhìn thấy bên ngoài"
+      ],
+      "call": "Gọi 115 – bỏng điện là chấn thương nặng"
+    },
+    {
+      "num": "07",
+      "icon": "🦴",
+      "accent": "#9b59b6",
+      "title": "Gãy xương & bong gân",
+      "items": [
+        "Không di chuyển phần bị gãy – nẹp cố định tại chỗ",
+        "Dùng nẹp cứng (gỗ, bìa cứng, tạp chí cuộn) dài hơn khớp trên và dưới",
+        "Buộc cố định trên và dưới chỗ gãy – không buộc quá chặt",
+        "Chườm đá giảm sưng – không chườm trực tiếp lên da",
+        "Gãy hở (xương đâm ra ngoài): không đẩy xương vào, che bằng gạc sạch"
+      ],
+      "call": "Gọi 115 nếu gãy lớn, gãy hở, hoặc nghi ngờ gãy cột sống"
+    },
+    {
+      "num": "08",
+      "icon": "🐍",
+      "accent": "#27ae60",
+      "title": "Rắn cắn & côn trùng độc",
+      "items": [
+        "Giữ bình tĩnh – nằm yên, để vết cắn thấp hơn tim",
+        "Rửa vết cắn bằng nước sạch",
+        "Băng nhẹ (không garo chặt) quanh vết cắn",
+        "Không rạch, châm, chích, hút nọc độc",
+        "Chụp ảnh con rắn nếu an toàn – giúp bệnh viện chọn huyết thanh đúng"
+      ],
+      "tips": "Cởi đồ trang sức gần vết cắn (sẽ sưng). Gọi 115 và đến bệnh viện có huyết thanh kháng nọc.",
+      "call": "Gọi 115 – đến viện có huyết thanh ngay"
+    },
+    {
+      "num": "09",
+      "icon": "💊",
+      "accent": "#c62828",
+      "title": "Ngộ độc thực phẩm & hóa chất",
+      "items": [
+        "Gọi Trung tâm Chống độc hoặc 115",
+        "Không tự ý gây nôn nếu nạn nhân uống chất ăn mòn (axit, kiềm)",
+        "Giữ lại mẫu chất nghi ngờ để bác sĩ xác định",
+        "Nới lỏng quần áo, để nạn nhân nằm nghiêng an toàn nếu nôn",
+        "Ngộ độc khí: mở cửa sổ, đưa nạn nhân ra không khí sạch"
+      ],
+      "numbers": [
+        { "label": "Cấp cứu", "num": "115", "color": "#e74c3c" },
+        { "label": "Chống độc", "num": "1900.9095", "color": "#e67e22" }
+      ],
+      "call": "Gọi Trung tâm Chống độc hoặc 115 ngay lập tức"
+    },
+    {
+      "num": "10",
+      "icon": "🆘",
+      "accent": "#2c3e50",
+      "title": "Số khẩn cấp tại Việt Nam",
+      "closing": true,
+      "text": "Lưu tất cả các số này vào danh bạ điện thoại. Trong tình huống khẩn cấp, một cuộc gọi có thể cứu sống sinh mạng.",
+      "numbers": [
+        { "label": "Cấp cứu y tế", "num": "115", "color": "#e74c3c" },
+        { "label": "Cứu hỏa", "num": "114", "color": "#e67e22" },
+        { "label": "Công an", "num": "113", "color": "#2c3e50" },
+        { "label": "Tổng đài khẩn cấp", "num": "112", "color": "#9b59b6" }
+      ],
+      "call": "Hãy lưu ngay các số này! Chia sẻ cho người thân và bạn bè."
+    }
+  ],
+  "spreads": [
+    { "index": 0, "left": "cover-inside", "right": "01", "label": "🔥 Bỏng" },
+    { "index": 1, "left": "02", "right": "03", "label": "🧯 Cháy & Đột quỵ" },
+    { "index": 2, "left": "04", "right": "05", "label": "🚗 Tai nạn & CPR" },
+    { "index": 3, "left": "06", "right": "07", "label": "⚡ Điện & Gãy xương" },
+    { "index": 4, "left": "08", "right": "09", "label": "🐍 Rắn & Ngộ độc" },
+    { "index": 5, "left": "10", "right": null, "label": "🆘 Số khẩn cấp" }
+  ]
+}

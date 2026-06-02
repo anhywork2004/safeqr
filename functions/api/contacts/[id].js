@@ -47,9 +47,21 @@ export async function onRequestPut(context) {
     const user = await requireAuth(request, env);
     if (!user) return errorResponse('Unauthorized', 401);
 
-    // Authorization: agency can only edit their own contact
-    if (user.sub !== id) {
-      return errorResponse('Forbidden: can only edit your own contact', 403);
+    // Look up the contact to check ownership
+    const contact = await env.DB.prepare(
+      'SELECT locality_id FROM contacts WHERE id = ?'
+    ).bind(id).first();
+
+    if (!contact) return errorResponse('Contact not found', 404);
+
+    // Global contacts (locality_id IS NULL) cannot be edited by locality admins
+    if (contact.locality_id === null) {
+      return errorResponse('Forbidden: global contacts cannot be modified', 403);
+    }
+
+    // Authorization: locality admin can only edit contacts for their locality
+    if (user.sub !== contact.locality_id) {
+      return errorResponse('Forbidden: can only edit contacts in your locality', 403);
     }
 
     // Parse and validate body

@@ -103,16 +103,16 @@ async function apiGetConfig() {
 // ─── Auth API ─────────────────────────────────────────────────
 
 /**
- * Login via API.
- * Returns {token, agencyId, agencyName} on success, null on failure.
+ * Login via API (locality-based).
+ * Returns {token, localityId, localityName, district, city} on success, null on failure.
  */
-async function apiLogin(agencyId, password) {
+async function apiLogin(localityId, password) {
   var url = apiUrl('/api/auth');
   if (!url) return null;
 
   // Validate inputs before sending
-  if (!agencyId || !password) return null;
-  if (typeof agencyId !== 'string' || agencyId.length > 64) return null;
+  if (!localityId || !password) return null;
+  if (typeof localityId !== 'string' || localityId.length > 64) return null;
   if (typeof password !== 'string' || password.length > 128) return null;
 
   try {
@@ -120,7 +120,7 @@ async function apiLogin(agencyId, password) {
       method: 'POST',
       headers: apiHeaders(),
       body: JSON.stringify({
-        agencyId: agencyId,
+        localityId: localityId,
         password: password
       })
     });
@@ -156,9 +156,10 @@ async function apiLogin(agencyId, password) {
 
 /**
  * Update contact via API (requires auth token).
+ * The API checks that the contact belongs to the logged-in locality.
  */
-async function apiUpdateContact(agencyId, data) {
-  var url = apiUrl('/api/contacts/' + encodeURIComponent(agencyId));
+async function apiUpdateContact(contactId, data) {
+  var url = apiUrl('/api/contacts/' + encodeURIComponent(contactId));
   if (!url) return null;
 
   var token = apiGetToken();
@@ -373,6 +374,91 @@ async function apiGetEmergencies(since, limit) {
     return await res.json();
   } catch (e) {
     console.warn('apiGetEmergencies failed:', e.message);
+    return null;
+  }
+}
+
+// ─── Local Contacts CRUD ──────────────────────────────────────
+
+/**
+ * Create a new local contact for the logged-in locality.
+ * @param {object} data - { name, phone, address, maps_query, icon, color, description }
+ * @returns {Promise<object|null>}
+ */
+async function apiCreateContact(data) {
+  var url = apiUrl('/api/local-contacts');
+  if (!url) return null;
+
+  var token = apiGetToken();
+  if (!token) return null;
+
+  if (!data || !data.name || !data.phone) return null;
+
+  var body = {
+    name: String(data.name).trim().substring(0, 100),
+    phone: String(data.phone).trim().substring(0, 20),
+    address: String(data.address || '').trim().substring(0, 300),
+    maps_query: String(data.maps_query || data.mapsQuery || '').trim().substring(0, 200),
+    icon: String(data.icon || '📞').trim().substring(0, 8),
+    color: data.color || '#c62828',
+    description: String(data.description || '').trim().substring(0, 500)
+  };
+
+  try {
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('apiCreateContact failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Delete a local contact.
+ * @param {string} contactId
+ * @returns {Promise<object|null>}
+ */
+async function apiDeleteContact(contactId) {
+  var url = apiUrl('/api/local-contacts?id=' + encodeURIComponent(contactId));
+  if (!url) return null;
+
+  var token = apiGetToken();
+  if (!token) return null;
+
+  try {
+    var res = await fetch(url, {
+      method: 'DELETE',
+      headers: apiHeaders(token)
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('apiDeleteContact failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetch available localities list (for login dropdown).
+ * Reads from the root _locality_list endpoint or falls back to config.
+ * @returns {Promise<Array|null>}
+ */
+async function apiGetLocalities() {
+  var url = apiUrl('/api/localities');
+  if (!url) return null;
+
+  try {
+    var res = await fetch(url);
+    if (!res.ok) return null;
+    var data = await res.json();
+    return data.localities || data;
+  } catch (e) {
+    console.warn('apiGetLocalities failed:', e.message);
     return null;
   }
 }

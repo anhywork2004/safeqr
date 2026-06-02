@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#c62828">
+  <meta name="description" content="Bảng tin SafeQR – Thông báo khẩn cấp & an toàn từ cơ quan hành chính địa phương">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
+  <title>Bảng Tin – SafeQR</title>
+  <link rel="stylesheet" href="../css/news.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="news-header">
+    <div class="news-header-inner">
+      <a href="../index.html" class="news-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Về trang khẩn cấp
+      </a>
+      <div class="news-header-title">
+        <h1>📋 Bảng Tin</h1>
+        <p>Thông báo từ cơ quan hành chính địa phương</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <div class="news-filters" id="newsFilters">
+    <button class="filter-chip active" data-category="">Tất cả</button>
+    <button class="filter-chip" data-category="safety">🛡️ An toàn</button>
+    <button class="filter-chip" data-category="health">🏥 Y tế</button>
+    <button class="filter-chip" data-category="traffic">🚗 Giao thông</button>
+    <button class="filter-chip" data-category="weather">🌦 Thời tiết</button>
+    <button class="filter-chip" data-category="general">📌 Chung</button>
+  </div>
+
+  <!-- News Feed -->
+  <main class="news-feed" id="newsFeed">
+    <div class="news-loading">Đang tải bảng tin...</div>
+  </main>
+
+  <!-- Load More -->
+  <div class="news-loadmore" id="newsLoadMore" style="display:none">
+    <button class="loadmore-btn" id="loadMoreBtn">Xem thêm</button>
+  </div>
+
+  <!-- Empty State -->
+  <div class="news-empty" id="newsEmpty" style="display:none">
+    <div class="empty-icon">📭</div>
+    <h3>Chưa có bài viết nào</h3>
+    <p>Các cơ quan hành chính sẽ đăng thông báo tại đây.</p>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/news.js"></script>
+</body>
+</html>

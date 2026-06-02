@@ -44,12 +44,12 @@ export async function onRequestPut(context) {
       return errorResponse('Password must contain both letters and numbers', 400);
     }
 
-    // Look up current password
+    // Look up current password from localities table
     const record = await env.DB.prepare(
-      'SELECT password_hash FROM passwords WHERE agency_id = ?'
+      'SELECT password_hash FROM localities WHERE id = ?'
     ).bind(user.sub).first();
 
-    if (!record) return errorResponse('Agency not found', 404);
+    if (!record) return errorResponse('Locality not found', 404);
 
     // Verify current password (supports legacy SHA-256)
     const result = await verifyPassword(currentPassword, record.password_hash);
@@ -60,7 +60,7 @@ export async function onRequestPut(context) {
     // Hash new password with PBKDF2
     const newHash = await hashPassword(newPassword);
     await env.DB.prepare(
-      'UPDATE passwords SET password_hash = ? WHERE agency_id = ?'
+      'UPDATE localities SET password_hash = ? WHERE id = ?'
     ).bind(newHash, user.sub).run();
 
     return jsonResponse({

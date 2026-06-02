@@ -462,7 +462,7 @@
 
       // ── QR Code (center area) ──
       var qrAreaTop = headerY + badgeH + Math.round(H * 0.06);
-      var qrAreaBottom = H - margin - Math.round(H * 0.22);
+      var qrAreaBottom = H - margin - Math.round(H * 0.30);   // 30% for bottom section
       var qrAreaHeight = qrAreaBottom - qrAreaTop;
 
       // QR size = about 55% of poster width for A4 portrait
@@ -521,56 +521,76 @@
       ctx.fillText('Không cần cài ứng dụng · Hỗ trợ iPhone & Android', W / 2, belowQRY + scanFontSize + Math.round(H * 0.01));
 
       // ── Instructions section (bottom area) ──
-      var instY = qrAreaBottom + Math.round(H * 0.02);
+      // Calculate sizes first so nothing overlaps
+      var instHeaderSize = Math.round(H * 0.02);
+      var stepFontSize   = Math.round(H * 0.018);
+      var stepLineH      = Math.round(H * 0.034);   // slightly taller line height
+      var calloutH       = Math.round(H * 0.042);
+      var instPadX_      = Math.round(W * 0.05);
+      var instPadTop     = Math.round(H * 0.022);
+      var instPadBot     = Math.round(H * 0.02);
+      var gapAfterSteps  = Math.round(H * 0.018);
+
+      // Total content height inside box:
+      // instPadTop + header + gap + 4 steps + gap + callout + instPadBot
+      var totalContentH  = instPadTop + instHeaderSize + Math.round(H * 0.014)
+                         + 4 * stepLineH
+                         + gapAfterSteps + calloutH + instPadBot;
+
+      var instY = qrAreaBottom + Math.round(H * 0.018);
       var instW = contentW * 0.9;
       var instX = (W - instW) / 2;
-      var instH = H - margin - instY - Math.round(H * 0.03);
+      var instH = totalContentH;
 
-      // Instruction box
+      // Clamp so box doesn't overflow poster
+      var maxInstH = H - margin - instY - Math.round(H * 0.025) - barH;
+      if (instH > maxInstH) instH = maxInstH;
+
+      // Instruction box background
       ctx.fillStyle = '#fafaf7';
       ctx.strokeStyle = '#e8e4db';
       ctx.lineWidth = 1;
-      roundRect(ctx, instX, instY, instW, instH, Math.round(instH * 0.08));
+      roundRect(ctx, instX, instY, instW, instH, Math.round(Math.min(instH * 0.06, 10)));
       ctx.fill();
       ctx.stroke();
 
-      var instPadX = Math.round(instW * 0.05);
-      var instPadY = Math.round(instH * 0.1);
-
       // Instructions header
-      var instHeaderSize = Math.round(H * 0.02);
+      var curY = instY + instPadTop;
       ctx.fillStyle = '#c62828';
       ctx.font = '800 ' + instHeaderSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('📋 KHI GẶP TÌNH HUỐNG KHẨN CẤP:', instX + instPadX, instY + instPadY);
+      ctx.textBaseline = 'top';
+      ctx.fillText('📋 KHI GẶP TÌNH HUỐNG KHẨN CẤP:', instX + instPadX_, curY);
+      curY += instHeaderSize + Math.round(H * 0.014);
 
-      // Step 1
-      var stepY = instY + instPadY + instHeaderSize + Math.round(H * 0.018);
-      var stepFontSize = Math.round(H * 0.018);
-      var stepLineH = Math.round(H * 0.032);
+      // Steps — draw each line advancing curY
       ctx.fillStyle = '#1c1c1c';
       ctx.font = '600 ' + stepFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.fillText('1. Mở camera điện thoại, hướng vào mã QR này.', instX + instPadX, stepY);
-      ctx.fillText('2. Trang khẩn cấp hiện ra → xem vị trí của bạn + số điện thoại cứu hộ gần nhất.', instX + instPadX, stepY + stepLineH);
-      ctx.fillText('3. Bấm nút GỌI NGAY (115 Cấp cứu · 114 Cứu hỏa · 113 Công an).', instX + instPadX, stepY + 2 * stepLineH);
-      ctx.fillText('4. Gửi vị trí của bạn qua nút SOS để lực lượng chức năng định vị chính xác.', instX + instPadX, stepY + 3 * stepLineH);
+      var steps = [
+        '1. Mở camera điện thoại, hướng vào mã QR này.',
+        '2. Trang khẩn cấp hiện ra → xem vị trí + số điện thoại cứu hộ gần nhất.',
+        '3. Bấm nút GỌI NGAY (115 Cấp cứu · 114 Cứu hỏa · 113 Công an).',
+        '4. Gửi vị trí qua nút SOS để lực lượng chức năng định vị chính xác.'
+      ];
+      for (var s = 0; s < steps.length; s++) {
+        ctx.fillText(steps[s], instX + instPadX_, curY);
+        curY += stepLineH;
+      }
 
-      // ── Emergency numbers in red callout ──
-      var calloutY = instY + instH - instPadY - Math.round(H * 0.055);
-      var calloutH = Math.round(H * 0.04);
-      var calloutW = instW * 0.85;
-      var calloutX = (W - calloutW) / 2;
-
+      // ── Emergency numbers callout — placed right after steps ──
+      curY += gapAfterSteps;
+      var calloutW = instW * 0.9;
+      var calloutX = instX + (instW - calloutW) / 2;
       ctx.fillStyle = '#c62828';
-      roundRect(ctx, calloutX, calloutY, calloutW, calloutH, Math.round(calloutH * 0.4));
+      roundRect(ctx, calloutX, curY, calloutW, calloutH, Math.round(calloutH * 0.35));
       ctx.fill();
 
-      var calloutFontSize = Math.round(calloutH * 0.55);
+      var calloutFontSize = Math.round(calloutH * 0.48);
       ctx.fillStyle = '#ffffff';
       ctx.font = '800 ' + calloutFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('115 Cấp cứu  ·  114 Cứu hỏa  ·  113 Công an  ·  112 Tổng đài khẩn cấp', calloutX + calloutW / 2, calloutY + calloutH / 2);
+      ctx.fillText('115 Cấp cứu  ·  114 Cứu hỏa  ·  113 Công an  ·  112 Tổng đài', calloutX + calloutW / 2, curY + calloutH / 2);
 
       // ── Footer ──
       var footerY = H - margin - Math.round(H * 0.012);

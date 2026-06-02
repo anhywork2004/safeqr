@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#c62828">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'">
-  <title>SafeQR – Bảng điều khiển</title>
+  <title>SafeQR – Bảng điều khiển Địa phương</title>
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
         </svg>
         <div>
           <strong>SafeQR Admin</strong>
-          <span id="agencyLabel" class="dash-agency-label"></span>
+          <span id="localityLabel" class="dash-agency-label"></span>
         </div>
       </div>
       <button class="btn-logout" onclick="logout()">Đăng xuất</button>
@@ -27,59 +27,85 @@
 
     <!-- Navigation Tabs -->
     <nav class="dash-nav">
-      <a href="dashboard.html" class="dash-nav-btn active">📋 Liên hệ</a>
+      <a href="dashboard.html" class="dash-nav-btn active">📋 Liên hệ địa phương</a>
+      <a href="news.html" class="dash-nav-btn">📰 Bảng tin</a>
       <a href="emergency.html" class="dash-nav-btn">🗺 Bản đồ khẩn cấp</a>
     </nav>
 
-    <!-- Main -->
-    <main class="dash-main">
+    <main class="dash-main-wide">
+      <!-- Section: Local Contacts -->
+      <div class="dash-card dash-card-full">
+        <div class="dash-card-header">
+          <h2>📋 Danh sách liên hệ tại <span id="localityTitle"></span></h2>
+          <button class="btn-add-contact" onclick="showAddForm()">+ Thêm liên hệ</button>
+        </div>
+        <p class="dash-card-sub">Quản lý số điện thoại khẩn cấp tại địa phương bạn. Các số toàn quốc (115, 114, 113) không thể chỉnh sửa.</p>
+
+        <!-- Contact List -->
+        <div class="contact-list" id="contactList">
+          <div class="contact-list-empty">Đang tải...</div>
+        </div>
+      </div>
+
+      <!-- Section: Change Password -->
       <div class="dash-card">
-        <h2>Cập nhật thông tin liên hệ</h2>
-        <p class="dash-card-sub">Thay đổi sẽ hiển thị ngay trên trang QR Khẩn Cấp</p>
-
-        <form id="editForm" autocomplete="off">
+        <h2>🔐 Đổi mật khẩu</h2>
+        <form id="pwdForm" autocomplete="off" onsubmit="return false;">
           <div class="form-field">
-            <label for="phone">Số điện thoại</label>
-            <input type="text" id="phone" required placeholder="VD: 115">
+            <label for="newPassword">Mật khẩu mới</label>
+            <input type="password" id="newPassword" placeholder="Để trống nếu không đổi" minlength="4">
           </div>
-
-          <div class="form-field">
-            <label for="address">Địa chỉ</label>
-            <textarea id="address" rows="2" placeholder="Nhập địa chỉ đơn vị"></textarea>
-          </div>
-
-          <div class="form-field">
-            <label for="mapsQuery">Từ khóa Google Maps</label>
-            <input type="text" id="mapsQuery" placeholder="VD: Bệnh viện Đa khoa Thủ Đức">
-            <span class="form-hint">Dùng để tìm đường chính xác trên Google Maps</span>
-          </div>
-
-          <div class="form-field">
-            <label for="description">Mô tả thêm</label>
-            <textarea id="description" rows="2" placeholder="VD: Gọi khi có tai nạn, đột quỵ..."></textarea>
-          </div>
-
-          <div class="form-field">
-            <label for="newPassword">Đổi mật khẩu <span style="font-weight:400;color:#999;">(để trống nếu không đổi)</span></label>
-            <input type="password" id="newPassword" placeholder="Mật khẩu mới">
-          </div>
-
-          <div class="dash-actions">
-            <button type="submit" class="btn-save">Lưu thay đổi</button>
-            <button type="button" class="btn-reset" onclick="resetToDefault()">Khôi phục mặc định</button>
+          <div class="form-actions" style="margin-top:12px;">
+            <button type="button" class="btn-save" onclick="changePassword()">Đổi mật khẩu</button>
           </div>
         </form>
-
-        <div class="last-updated" id="lastUpdated"></div>
-      </div>
-
-      <!-- Preview -->
-      <div class="dash-card">
-        <h3>Xem trước trên trang khẩn cấp</h3>
-        <div class="preview-card" id="previewCard"></div>
-        <a href="/" class="btn-preview-link" target="_blank">🔗 Mở trang khẩn cấp thực tế →</a>
+        <p class="dash-card-sub" style="margin-top:8px;">Mật khẩu tối thiểu 4 ký tự. Đổi mật khẩu định kỳ để bảo mật.</p>
       </div>
     </main>
+
+    <!-- Add/Edit Contact Modal -->
+    <div class="modal-overlay" id="contactModal" onclick="closeContactModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <h3 id="modalTitle">Thêm liên hệ mới</h3>
+        <form id="contactForm" autocomplete="off" onsubmit="return false;">
+          <input type="hidden" id="editContactId" value="">
+          <div class="form-field">
+            <label for="cName">Tên đơn vị *</label>
+            <input type="text" id="cName" required placeholder="VD: Trạm Y tế P. Hiệp Phú" maxlength="100">
+          </div>
+          <div class="form-field">
+            <label for="cPhone">Số điện thoại *</label>
+            <input type="text" id="cPhone" required placeholder="VD: 028.3896.1234" maxlength="20">
+          </div>
+          <div class="form-field">
+            <label for="cAddress">Địa chỉ</label>
+            <input type="text" id="cAddress" placeholder="VD: 64 Lê Văn Việt, P. Hiệp Phú" maxlength="300">
+          </div>
+          <div class="form-field">
+            <label for="cMapsQuery">Từ khóa Google Maps</label>
+            <input type="text" id="cMapsQuery" placeholder="VD: Trạm y tế phường Hiệp Phú" maxlength="200">
+          </div>
+          <div class="form-field">
+            <label for="cDesc">Mô tả</label>
+            <input type="text" id="cDesc" placeholder="VD: Khám chữa bệnh, sơ cứu ban đầu" maxlength="500">
+          </div>
+          <div class="form-row">
+            <div class="form-field" style="flex:0 0 70px;">
+              <label for="cIcon">Icon</label>
+              <input type="text" id="cIcon" value="📞" maxlength="4" style="text-align:center;font-size:1.2rem;">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label for="cColor">Màu</label>
+              <input type="color" id="cColor" value="#c62828" style="height:42px;">
+            </div>
+          </div>
+        </form>
+        <div class="modal-actions">
+          <button class="btn-save" onclick="saveContact()">💾 Lưu</button>
+          <button class="btn-cancel" onclick="closeContactModal()">Hủy</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>

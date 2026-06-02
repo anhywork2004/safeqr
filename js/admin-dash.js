@@ -1,40 +1,335 @@
+// ============================================================
+// SafeQR – Admin Dashboard (Locality-based, multi-contact)
+// ============================================================
 var SESSION_KEY = 'safeqr_session';
 var CONTACTS_KEY = 'safeqr_contacts';
 var PASSWORDS_KEY = 'safeqr_passwords';
 
 var session = null;
-var currentContact = null;
-var currentDefault = null;
+var _localContacts = [];
+var _globalContacts = [];
+var _editingId = null;
 
-// ========== AUTH CHECK ==========
+// ─── Init ────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkAuth();
+  loadDashboard();
+});
+
 function checkAuth() {
   try {
-    var raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) { redirectLogin(); return; }
-    session = JSON.parse(raw);
-    if (!session.agencyId) { redirectLogin(); return; }
+    session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+  } catch(e) { session = null; }
 
-    // Check session age (max 8 hours)
-    var elapsed = Date.now() - new Date(session.loginTime).getTime();
-    if (elapsed > 8 * 60 * 60 * 1000) {
-      sessionStorage.removeItem(SESSION_KEY);
-      redirectLogin();
-      return;
-    }
-
-    document.getElementById('agencyLabel').textContent = session.agencyName;
-  } catch (e) {
-    redirectLogin();
+  if (!session || !session.localityId) {
+    window.location.href = 'index.html';
+    return;
+  }
+  if (session.loginTime && (Date.now() - session.loginTime) > 8 * 60 * 60 * 1000) {
+    sessionStorage.removeItem(SESSION_KEY);
+    window.location.href = 'index.html';
+    return;
   }
 }
 
-function redirectLogin() {
-  try {
-    sessionStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem('safeqr_token');
-  } catch(e) {}
-  window.location.href = 'index.html';
+// ─── Load Dashboard ──────────────────────────────────────────
+
+async function loadDashboard() {
+  document.getElementById('localityLabel').textContent = session.localityName || session.localityId;
+  document.getElementById('localityTitle').textContent = session.localityName || session.localityId;
+
+  // Load contacts
+  await loadContacts();
+  renderContactList();
 }
+
+async function loadContacts() {
+  _localContacts = [];
+  _globalContacts = [];
+
+  // Try API first
+  try {
+    var allContacts = await apiGetContacts();
+    if (allContacts && allContacts.length > 0) {
+      for (var i = 0; i < allContacts.length; i++) {
+        var c = allContacts[i];
+        if (c.locality_id === session.localityId) {
+          _localContacts.push(c);
+        } else if (c.locality_id === null || c.locality_id === undefined) {
+          _globalContacts.push(c);
+        }
+      }
+      // Merge with localStorage overrides
+      mergeLocalOverrides();
+      return;
+    }
+  } catch(e) {}
+
+  // Fallback: use emergencyContacts global + localStorage
+  var saved = getSavedContacts();
+  for (var j = 0; j < emergencyContacts.length; j++) {
+    var ec = emergencyContacts[j];
+    var override = saved[ec.id];
+    if (override) {
+      ec.phone = override.phone || ec.phone;
+      ec.address = override.address || ec.address;
+      ec.maps_query = override.maps_query || override.mapsQuery || ec.mapsQuery;
+      ec.description = override.description || ec.description;
+    }
+    if (ec.locality_id && ec.locality_id === session.localityId) {
+      _localContacts.push(ec);
+    } else if (!ec.locality_id) {
+      _globalContacts.push(ec);
+    }
+  }
+}
+
+function mergeLocalOverrides() {
+  var saved = getSavedContacts();
+  for (var i = 0; i < _localContacts.length; i++) {
+    var c = _localContacts[i];
+    var override = saved[c.id];
+    if (override) {
+      c.phone = override.phone || c.phone;
+      c.address = override.address || c.address;
+      c.maps_query = override.maps_query || c.maps_query;
+      c.description = override.description || c.description;
+    }
+  }
+}
+
+// ─── Render Contact List ─────────────────────────────────────
+
+function renderContactList() {
+  var list = document.getElementById('contactList');
+  var html = '';
+
+  // Global contacts section (locked)
+  if (_globalContacts.length > 0) {
+    html += '<div class="contact-section"><h4 class="contact-section-title">🚨 Số toàn quốc (không thể chỉnh sửa)</h4>';
+    for (var i = 0; i < _globalContacts.length; i++) {
+      var gc = _globalContacts[i];
+      html += '<div class="contact-row contact-global">'
+        + '<span class="contact-icon">' + escapeHtml(gc.icon || '📞') + '</span>'
+        + '<div class="contact-info">'
+        + '<strong>' + escapeHtml(gc.name) + '</strong>'
+        + '<span class="contact-phone">' + escapeHtml(gc.phone) + '</span>'
+        + '<span class="contact-addr">' + escapeHtml(gc.address || '') + '</span>'
+        + '</div>'
+        + '<span class="contact-lock" title="Số toàn quốc - không thể sửa">🔒</span>'
+        + '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Local contacts section
+  html += '<div class="contact-section"><h4 class="contact-section-title">📍 Liên hệ tại ' + escapeHtml(session.localityName || 'địa phương') + '</h4>';
+
+  if (_localContacts.length === 0) {
+    html += '<div class="contact-list-empty">Chưa có liên hệ địa phương nào. Nhấn "Thêm liên hệ" để bắt đầu.</div>';
+  } else {
+    for (var j = 0; j < _localContacts.length; j++) {
+      var lc = _localContacts[j];
+      html += '<div class="contact-row contact-local">'
+        + '<span class="contact-icon">' + escapeHtml(lc.icon || '📞') + '</span>'
+        + '<div class="contact-info">'
+        + '<strong>' + escapeHtml(lc.name) + '</strong>'
+        + '<span class="contact-phone">' + escapeHtml(lc.phone) + '</span>'
+        + '<span class="contact-addr">' + escapeHtml(lc.address || '') + '</span>'
+        + '</div>'
+        + '<div class="contact-actions">'
+        + '<button class="btn-icon-edit" onclick="editContact(\'' + escapeHtmlAttr(lc.id) + '\')" title="Sửa">✏️</button>'
+        + '<button class="btn-icon-del" onclick="deleteContact(\'' + escapeHtmlAttr(lc.id) + '\')" title="Xóa">🗑</button>'
+        + '</div>'
+        + '</div>';
+    }
+  }
+  html += '</div>';
+
+  list.innerHTML = html;
+
+  // Update last updated
+  var el = document.getElementById('lastUpdated');
+  if (el) el.textContent = 'Cập nhật lần cuối: ' + new Date().toLocaleString('vi-VN');
+}
+
+// ─── Add/Edit Contact Modal ──────────────────────────────────
+
+function showAddForm() {
+  _editingId = null;
+  document.getElementById('modalTitle').textContent = '➕ Thêm liên hệ mới';
+  document.getElementById('editContactId').value = '';
+  document.getElementById('cName').value = '';
+  document.getElementById('cPhone').value = '';
+  document.getElementById('cAddress').value = '';
+  document.getElementById('cMapsQuery').value = '';
+  document.getElementById('cDesc').value = '';
+  document.getElementById('cIcon').value = '📞';
+  document.getElementById('cColor').value = '#c62828';
+  document.getElementById('contactModal').classList.add('visible');
+}
+
+function editContact(contactId) {
+  var contact = null;
+  for (var i = 0; i < _localContacts.length; i++) {
+    if (_localContacts[i].id === contactId) { contact = _localContacts[i]; break; }
+  }
+  if (!contact) return;
+
+  _editingId = contactId;
+  document.getElementById('modalTitle').textContent = '✏️ Sửa: ' + contact.name;
+  document.getElementById('editContactId').value = contactId;
+  document.getElementById('cName').value = contact.name || '';
+  document.getElementById('cPhone').value = contact.phone || '';
+  document.getElementById('cAddress').value = contact.address || '';
+  document.getElementById('cMapsQuery').value = contact.maps_query || contact.mapsQuery || '';
+  document.getElementById('cDesc').value = contact.description || '';
+  document.getElementById('cIcon').value = contact.icon || '📞';
+  document.getElementById('cColor').value = contact.color || '#c62828';
+  document.getElementById('contactModal').classList.add('visible');
+}
+
+function closeContactModal(e) {
+  if (e && e.target !== document.getElementById('contactModal')) return;
+  document.getElementById('contactModal').classList.remove('visible');
+  _editingId = null;
+}
+
+// ─── Save Contact ────────────────────────────────────────────
+
+async function saveContact() {
+  var name = document.getElementById('cName').value.trim();
+  var phone = document.getElementById('cPhone').value.trim();
+  if (!name || !phone) { showToast('Vui lòng nhập tên và số điện thoại', true); return; }
+
+  var data = {
+    name: name,
+    phone: phone,
+    address: document.getElementById('cAddress').value.trim(),
+    maps_query: document.getElementById('cMapsQuery').value.trim(),
+    description: document.getElementById('cDesc').value.trim(),
+    icon: document.getElementById('cIcon').value.trim() || '📞',
+    color: document.getElementById('cColor').value || '#c62828',
+  };
+
+  if (_editingId) {
+    // Update existing
+    var apiResult = null;
+    if (session.useApi) {
+      apiResult = await apiUpdateContact(_editingId, data);
+    }
+    // Also save to localStorage
+    var saved = getSavedContacts();
+    saved[_editingId] = { phone: data.phone, address: data.address, maps_query: data.maps_query, description: data.description, _updatedAt: new Date().toISOString() };
+    saveContacts(saved);
+    showToast('✅ Đã cập nhật!');
+  } else {
+    // Create new
+    if (session.useApi) {
+      var createResult = await apiCreateContact(data);
+      if (createResult && createResult.id) {
+        showToast('✅ Đã thêm liên hệ mới!');
+      } else {
+        // Local fallback
+        var localId = session.localityId + '-local-' + Date.now();
+        var s2 = getSavedContacts();
+        s2[localId] = { name: data.name, phone: data.phone, address: data.address, maps_query: data.maps_query, description: data.description, icon: data.icon, color: data.color, locality_id: session.localityId, _createdAt: new Date().toISOString() };
+        saveContacts(s2);
+        showToast('✅ Đã thêm (lưu cục bộ)!');
+      }
+    } else {
+      var localId2 = session.localityId + '-local-' + Date.now();
+      var s3 = getSavedContacts();
+      s3[localId2] = { name: data.name, phone: data.phone, address: data.address, maps_query: data.maps_query, description: data.description, icon: data.icon, color: data.color, locality_id: session.localityId, _createdAt: new Date().toISOString() };
+      saveContacts(s3);
+      showToast('✅ Đã thêm (lưu cục bộ)!');
+    }
+  }
+
+  closeContactModal();
+  await loadContacts();
+  renderContactList();
+}
+
+// ─── Delete Contact ──────────────────────────────────────────
+
+async function deleteContact(contactId) {
+  if (!confirm('Xóa liên hệ này? Hành động này không thể hoàn tác.')) return;
+
+  if (session.useApi) {
+    await apiDeleteContact(contactId);
+  }
+  // Also remove from localStorage
+  var saved = getSavedContacts();
+  delete saved[contactId];
+  saveContacts(saved);
+
+  showToast('🗑 Đã xóa');
+  await loadContacts();
+  renderContactList();
+}
+
+// ─── Change Password ─────────────────────────────────────────
+
+async function changePassword() {
+  var newPwd = document.getElementById('newPassword').value.trim();
+  if (!newPwd) { showToast('Vui lòng nhập mật khẩu mới', true); return; }
+  if (newPwd.length < 4) { showToast('Mật khẩu phải có ít nhất 4 ký tự', true); return; }
+
+  if (session.useApi) {
+    var result = await apiChangePassword(
+      getLocalPasswords()[session.localityId] || '',
+      newPwd
+    );
+    if (result && result.success) {
+      showToast('✅ Đã đổi mật khẩu!');
+    } else if (result && result.error) {
+      showToast(result.error, true);
+      return;
+    }
+  }
+
+  // Save locally
+  var pwds = getLocalPasswords();
+  pwds[session.localityId] = newPwd;
+  localStorage.setItem(PASSWORDS_KEY, JSON.stringify(pwds));
+  document.getElementById('newPassword').value = '';
+  showToast('✅ Đã đổi mật khẩu!');
+}
+
+// ─── Helpers ─────────────────────────────────────────────────
+
+function getSavedContacts() {
+  try { return JSON.parse(localStorage.getItem(CONTACTS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveContacts(data) {
+  try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(data)); } catch(e) {}
+}
+function getLocalPasswords() {
+  try { return JSON.parse(localStorage.getItem(PASSWORDS_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function showToast(msg, isError) {
+  var toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  if (isError) toast.classList.add('error');
+  else toast.classList.remove('error');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(function() { toast.classList.remove('show', 'error'); }, 3000);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escapeHtmlAttr(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ─── Logout ──────────────────────────────────────────────────
 
 function logout() {
   sessionStorage.removeItem(SESSION_KEY);
@@ -42,207 +337,7 @@ function logout() {
     if (window.SafeQR_Security && window.SafeQR_Security.destroySession) {
       window.SafeQR_Security.destroySession();
     }
-    // Also clear token directly as fallback
     localStorage.removeItem('safeqr_token');
   } catch(e) {}
   window.location.href = 'index.html';
-}
-
-// ========== DATA ==========
-function getSavedContacts() {
-  try {
-    var raw = localStorage.getItem(CONTACTS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    return {};
-  }
-}
-
-function saveContacts(contacts) {
-  localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
-}
-
-function getPasswords() {
-  try {
-    var raw = localStorage.getItem(PASSWORDS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    return {};
-  }
-}
-
-function savePassword(agencyId, newPass) {
-  var pwd = getPasswords();
-  pwd[agencyId] = newPass;
-  localStorage.setItem(PASSWORDS_KEY, JSON.stringify(pwd));
-}
-
-// ========== LOAD & RENDER ==========
-function loadDashboard() {
-  currentDefault = findContact(session.agencyId);
-  if (!currentDefault) {
-    showToast('Không tìm thấy dữ liệu đơn vị', true);
-    return;
-  }
-
-  var saved = getSavedContacts();
-  currentContact = saved[session.agencyId]
-    ? Object.assign({}, currentDefault, saved[session.agencyId])
-    : Object.assign({}, currentDefault);
-
-  document.getElementById('phone').value = currentContact.phone || '';
-  document.getElementById('address').value = currentContact.address || '';
-  document.getElementById('mapsQuery').value = currentContact.mapsQuery || '';
-  document.getElementById('description').value = currentContact.description || '';
-
-  // Show last updated
-  if (saved[session.agencyId] && saved[session.agencyId]._updatedAt) {
-    document.getElementById('lastUpdated').textContent =
-      'Cập nhật lần cuối: ' + new Date(saved[session.agencyId]._updatedAt).toLocaleString('vi-VN');
-  } else {
-    document.getElementById('lastUpdated').textContent = '';
-  }
-
-  renderPreview();
-}
-
-function renderPreview() {
-  var card = document.getElementById('previewCard');
-  var phone = document.getElementById('phone').value || currentContact.phone;
-  var address = document.getElementById('address').value || currentContact.address;
-  var desc = document.getElementById('description').value || currentContact.description;
-
-  card.style.setProperty('--card-color', currentDefault.color);
-  card.innerHTML =
-    '<div class="pc-icon">' + currentDefault.icon + '</div>' +
-    '<div class="pc-name">' + currentDefault.name + '</div>' +
-    '<div class="pc-phone">' + escapeHtml(phone) + '</div>' +
-    '<div class="pc-address">' + escapeHtml(address) + '</div>' +
-    '<div class="pc-desc">' + escapeHtml(desc) + '</div>';
-}
-
-// Live preview binding
-document.addEventListener('DOMContentLoaded', async function () {
-  await loadData();
-  checkAuth();
-  loadDashboard();
-
-  var inputs = document.querySelectorAll('#editForm input, #editForm textarea');
-  for (var i = 0; i < inputs.length; i++) {
-    inputs[i].addEventListener('input', renderPreview);
-  }
-
-  var form = document.getElementById('editForm');
-  if (form) {
-    form.addEventListener('submit', handleSave);
-  }
-});
-
-// ========== SAVE ==========
-async function handleSave(e) {
-  e.preventDefault();
-
-  var phone = document.getElementById('phone').value.trim();
-  var address = document.getElementById('address').value.trim();
-  var mapsQuery = document.getElementById('mapsQuery').value.trim();
-  var description = document.getElementById('description').value.trim();
-  var newPassword = document.getElementById('newPassword').value.trim();
-
-  if (!phone) {
-    showToast('Vui lòng nhập số điện thoại', true);
-    return;
-  }
-
-  // Validate password BEFORE saving contact data
-  if (newPassword) {
-    if (newPassword.length < 4) {
-      showToast('Mật khẩu phải có ít nhất 4 ký tự', true);
-      return;
-    }
-    // Try API password change if available
-    if (session.useApi) {
-      var pwdResult = await apiChangePassword(
-        getPasswords()[session.agencyId] || DEFAULT_PASSWORDS[session.agencyId],
-        newPassword
-      );
-      if (pwdResult && pwdResult.success) {
-        console.log('API password change successful');
-      }
-    }
-    savePassword(session.agencyId, newPassword);
-    document.getElementById('newPassword').value = '';
-  }
-
-  // Save contact data (localStorage + optional API)
-  var saved = getSavedContacts();
-  saved[session.agencyId] = {
-    phone: phone,
-    address: address,
-    mapsQuery: mapsQuery,
-    description: description,
-    _updatedAt: new Date().toISOString()
-  };
-  saveContacts(saved);
-
-  if (session.useApi) {
-    var apiResult = await apiUpdateContact(session.agencyId, {
-      phone: phone,
-      address: address,
-      maps_query: mapsQuery,
-      description: description
-    });
-    if (apiResult) {
-      console.log('API save successful');
-    } else {
-      console.warn('API save failed, saved locally only');
-    }
-  }
-
-  if (newPassword) {
-    showToast('Đã lưu thông tin và đổi mật khẩu thành công!');
-  } else {
-    showToast('Đã lưu thông tin thành công!');
-  }
-
-  // Update last updated
-  document.getElementById('lastUpdated').textContent =
-    'Cập nhật lần cuối: ' + new Date().toLocaleString('vi-VN');
-}
-
-// ========== RESET ==========
-function resetToDefault() {
-  if (!confirm('Khôi phục về thông tin mặc định? Dữ liệu đã sửa sẽ bị xóa.')) return;
-
-  var saved = getSavedContacts();
-  delete saved[session.agencyId];
-  saveContacts(saved);
-
-  document.getElementById('phone').value = currentDefault.phone || '';
-  document.getElementById('address').value = currentDefault.address || '';
-  document.getElementById('mapsQuery').value = currentDefault.mapsQuery || '';
-  document.getElementById('description').value = currentDefault.description || '';
-  renderPreview();
-  document.getElementById('lastUpdated').textContent = '';
-  showToast('Đã khôi phục về thông tin mặc định');
-}
-
-// ========== UTILS ==========
-function findContact(agencyId) {
-  for (var i = 0; i < emergencyContacts.length; i++) {
-    if (emergencyContacts[i].id === agencyId) return emergencyContacts[i];
-  }
-  return null;
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function showToast(msg, isError) {
-  var toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.className = 'toast show' + (isError ? ' error' : '');
-  clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(function () { toast.classList.remove('show'); }, 3000);
 }

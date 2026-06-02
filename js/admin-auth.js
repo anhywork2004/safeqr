@@ -1,185 +1,178 @@
 // ============================================================
-// SafeQR – Admin Authentication (secure)
+// SafeQR – Admin Auth (Locality-based)
 // ============================================================
-// Primary: JWT-based API authentication with PBKDF2 hashing.
-// Fallback: Local password comparison (offline mode only).
-// Uses SafeQR_Security for session management when available.
+// Login with locality + password. Session stored in sessionStorage.
+// API-first authentication with offline fallback.
 // ============================================================
 
 var SESSION_KEY = 'safeqr_session';
 var CONTACTS_KEY = 'safeqr_contacts';
 var PASSWORDS_KEY = 'safeqr_passwords';
 
-// Get custom passwords from localStorage or defaults
-function getPasswords() {
-  try {
-    var saved = localStorage.getItem(PASSWORDS_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_PASSWORDS;
-  } catch (e) {
-    return DEFAULT_PASSWORDS;
+// ─── Fallback localities (offline mode) ──────────────────────
+
+var _FALLBACK_LOCALITIES = [
+  { id: 'phuong-hiep-phu', name: 'Phường Hiệp Phú', district: 'TP. Thủ Đức', city: 'TP. Hồ Chí Minh' },
+  { id: 'phuong-linh-trung', name: 'Phường Linh Trung', district: 'TP. Thủ Đức', city: 'TP. Hồ Chí Minh' },
+  { id: 'phuong-binh-tho', name: 'Phường Bình Thọ', district: 'TP. Thủ Đức', city: 'TP. Hồ Chí Minh' },
+];
+
+// ─── Locality Dropdown ───────────────────────────────────────
+
+async function loadLocalityDropdown() {
+  var select = document.getElementById('locality');
+  if (!select) return;
+
+  var localities = null;
+  try { localities = await apiGetLocalities(); } catch(e) {}
+
+  if (!localities || !localities.length) {
+    localities = _FALLBACK_LOCALITIES;
+  }
+
+  select.innerHTML = '<option value="">— Chọn địa phương —</option>';
+  for (var j = 0; j < localities.length; j++) {
+    var l = localities[j];
+    var label = '📍 ' + l.name;
+    if (l.district) label += ' - ' + l.district;
+    if (l.city) label += ', ' + l.city;
+    select.innerHTML += '<option value="' + escapeHtmlAttr(l.id) + '">' + escapeHtml(label) + '</option>';
   }
 }
 
-function findContact(agencyId) {
-  if (!agencyId || typeof agencyId !== 'string') return null;
-  return emergencyContacts.find(function(c) { return c.id === agencyId; });
+function escapeHtmlAttr(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// ─── Toast ───────────────────────────────────────────────────
 
 function showToast(msg, isError) {
   var toast = document.getElementById('toast');
   if (!toast) return;
   toast.textContent = msg;
-  toast.className = 'toast show' + (isError ? ' error' : '');
+  toast.classList.add('show');
+  if (isError) toast.classList.add('error');
+  else toast.classList.remove('error');
   clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(function () { toast.classList.remove('show'); }, 3000);
+  toast._timeout = setTimeout(function() {
+    toast.classList.remove('show', 'error');
+  }, 3000);
 }
 
-// ─── Session Management ────────────────────────────────────
+// ─── Session ─────────────────────────────────────────────────
 
-function createSessionObj(agencyId, agencyName, useApi) {
-  // Use security module if available
-  if (window.SafeQR_Security && window.SafeQR_Security.createSession) {
-    var session = window.SafeQR_Security.createSession(agencyId, agencyName);
-    session.useApi = !!useApi;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return session;
-  }
-
-  // Fallback session
-  var session = {
-    agencyId: agencyId,
-    agencyName: agencyName,
+function createSessionObj(data) {
+  return {
+    localityId: data.localityId,
+    localityName: data.localityName,
+    district: data.district || '',
+    city: data.city || '',
     loginTime: Date.now(),
-    useApi: !!useApi,
-    sessionId: 'legacy_' + Math.random().toString(36).substring(2),
+    useApi: data.useApi !== false,
+    sessionId: 'legacy_' + Math.random().toString(36).substring(2, 10),
   };
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return session;
 }
 
-// ─── Login Handler ─────────────────────────────────────────
+// ─── Login Handler ───────────────────────────────────────────
 
 async function handleLogin(e) {
   e.preventDefault();
-  var agency = document.getElementById('agency').value;
-  var password = document.getElementById('password').value;
-  var btn = document.querySelector('.btn-login');
 
-  if (!agency || !password) {
-    showToast('Vui lòng chọn đơn vị và nhập mật khẩu', true);
+  var localityId = document.getElementById('locality').value.trim();
+  var password = document.getElementById('password').value.trim();
+
+  if (!localityId || !password) {
+    showToast('Vui lòng chọn địa phương và nhập mật khẩu', true);
     return;
   }
 
-  // Validate agency ID format
-  if (window.SafeQR_Security && window.SafeQR_Security.isValidAgencyId) {
-    if (!window.SafeQR_Security.isValidAgencyId(agency)) {
-      showToast('Đơn vị không hợp lệ', true);
-      return;
+  showToast('Đang đăng nhập...');
+
+  // Primary: API login
+  var apiResult = await apiLogin(localityId, password);
+
+  if (apiResult && apiResult.token) {
+    var session = createSessionObj({
+      localityId: apiResult.localityId || localityId,
+      localityName: apiResult.localityName || localityId,
+      district: apiResult.district || '',
+      city: apiResult.city || '',
+      useApi: true,
+    });
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+    if (window.SafeQR_Security && window.SafeQR_Security.createSession) {
+      window.SafeQR_Security.createSession(session.localityId, session.localityName, true);
+    }
+
+    showToast('✅ Đăng nhập thành công!');
+    setTimeout(function() { window.location.href = 'dashboard.html'; }, 300);
+    return;
+  }
+
+  // Fallback: local password check (offline)
+  var passwords = getLocalPasswords();
+  var expectedPwd = passwords[localityId] || DEFAULT_PASSWORDS ? DEFAULT_PASSWORDS[localityId] : null;
+
+  // Find locality name from fallback list
+  var locName = localityId;
+  for (var i = 0; i < _FALLBACK_LOCALITIES.length; i++) {
+    if (_FALLBACK_LOCALITIES[i].id === localityId) {
+      locName = _FALLBACK_LOCALITIES[i].name;
+      break;
     }
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Đang đăng nhập...';
-
-  // — Primary: API login with PBKDF2 + JWT —
-  var apiResult = await apiLogin(agency, password);
-  if (apiResult && apiResult.token) {
-    var contact = findContact(agency);
-    createSessionObj(agency, contact ? contact.name : agency, true);
-    showToast('Đăng nhập thành công! Đang chuyển hướng...');
-    setTimeout(function () { window.location.href = 'dashboard.html'; }, 300);
+  if (expectedPwd && timingSafeEqual(password, expectedPwd)) {
+    var localSession = createSessionObj({
+      localityId: localityId,
+      localityName: locName,
+      useApi: false,
+    });
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(localSession));
+    showToast('✅ Đăng nhập thành công (ngoại tuyến)!');
+    setTimeout(function() { window.location.href = 'dashboard.html'; }, 500);
     return;
   }
 
-  // If API returned an error (not null = network failure), show it
-  if (apiResult && apiResult.error) {
-    btn.disabled = false;
-    btn.textContent = 'Đăng nhập';
-    showToast(apiResult.error, true);
-    return;
-  }
-
-  // — Fallback: Local auth (offline mode) —
-  // ⚠️  This compares against passwords shipped in the JS bundle.
-  // Only used when the API is completely unreachable.
-  console.warn('[SafeQR] API không khả dụng, dùng xác thực local (offline).');
-  btn.textContent = 'API không khả dụng, thử offline...';
-
-  var passwords = getPasswords();
-  var expected = passwords[agency];
-
-  if (!expected) {
-    showToast('Không tìm thấy thông tin đơn vị.', true);
-    btn.disabled = false;
-    btn.textContent = 'Đăng nhập';
-    return;
-  }
-
-  // Constant-time comparison to mitigate timing attacks
-  if (!timingSafeEqual(password, expected)) {
-    // Add a small random delay to prevent brute-force timing
-    await randomDelay(50, 150);
-    showToast('Mật khẩu không đúng. Vui lòng kiểm tra lại.', true);
-    btn.disabled = false;
-    btn.textContent = 'Đăng nhập';
-    return;
-  }
-
-  var contact = findContact(agency);
-  createSessionObj(agency, contact ? contact.name : agency, false);
-
-  showToast('⚠️ Đăng nhập offline. Vui lòng đổi mật khẩu khi có kết nối API.');
-  setTimeout(function () { window.location.href = 'dashboard.html'; }, 500);
+  // Random delay to deter brute force
+  await randomDelay(50, 150);
+  showToast('Sai địa phương hoặc mật khẩu', true);
 }
 
-// ─── Security Helpers ──────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────
 
-/**
- * Constant-time string comparison to mitigate timing attacks.
- * All characters are always compared, regardless of length difference.
- */
+function getLocalPasswords() {
+  try {
+    return JSON.parse(localStorage.getItem(PASSWORDS_KEY) || '{}');
+  } catch(e) { return {}; }
+}
+
 function timingSafeEqual(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-
-  var len = Math.max(a.length, b.length);
   var result = 0;
-
+  var len = Math.max(a.length, b.length);
   for (var i = 0; i < len; i++) {
-    var charA = i < a.length ? a.charCodeAt(i) : 0;
-    var charB = i < b.length ? b.charCodeAt(i) : 0;
-    result |= charA ^ charB;
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   }
-
   return result === 0 && a.length === b.length;
 }
 
-/**
- * Delay for a random amount of milliseconds.
- * Used to add jitter to auth operations.
- */
-function randomDelay(minMs, maxMs) {
-  var ms = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-  return new Promise(function(resolve) {
-    setTimeout(resolve, ms);
+function randomDelay(min, max) {
+  return new Promise(function(r) {
+    setTimeout(r, min + Math.floor(Math.random() * (max - min)));
   });
 }
 
-// ─── Bind Login Form ───────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
-document.addEventListener('DOMContentLoaded', async function () {
+// ─── Init ────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async function() {
   await loadData();
-  var form = document.getElementById('loginForm');
-  if (form) {
-    form.addEventListener('submit', handleLogin);
-  }
-
-  // Warn if passwords.json was loaded (should be changed immediately)
-  if (DEFAULT_PASSWORDS && Object.keys(DEFAULT_PASSWORDS).length > 0) {
-    console.warn(
-      '[SafeQR] ⚠️  %cCẢNH BÁO BẢO MẬT:%c Mật khẩu mặc định đã được tải. ' +
-      'Vui lòng đổi tất cả mật khẩu ngay sau khi đăng nhập. ' +
-      'Không sử dụng mật khẩu mặc định trong production.',
-      'font-weight:bold;color:#c62828;', ''
-    );
-  }
+  loadLocalityDropdown();
+  document.getElementById('loginForm').addEventListener('submit', handleLogin);
 });
