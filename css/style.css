@@ -530,6 +530,16 @@ body { max-width: var(--max-width); }
   font-weight: 440;
 }
 
+/* Section divider between global and local contacts */
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: var(--red);
+  border-radius: 2px;
+  margin: 32px auto 24px;
+  opacity: 0.4;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    CARD GRID — Dynamic columns (JS-controlled, auto-balanced)
    ═══════════════════════════════════════════════════════════════ */

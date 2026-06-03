@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SafeQR">
   <meta name="description" content="QR Khẩn Cấp – Kết nối nhanh dịch vụ cứu hộ, cứu nạn, cấp cứu. Không cần cài app.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://www.google.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; manifest-src 'self'; frame-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://www.google.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; manifest-src 'self'; frame-src 'self'">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
   <link rel="manifest" href="manifest.json">
@@ -86,15 +86,15 @@
         <span class="loc-dot pulse"></span><span class="loc-text">Đang xác định vị trí...</span>
       </div>
       <div class="hero-hotlines">
-        <button onclick="handleCall('115','Cấp cứu y tế','#e74c3c')" class="hotline-btn hotline-medical">
+        <button data-action="handleCall" data-args='["115","Cấp cứu y tế","#e74c3c"]' class="hotline-btn hotline-medical">
           <span class="hotline-num">115</span>
           <span class="hotline-label">Cấp cứu</span>
         </button>
-        <button onclick="handleCall('114','Cảnh sát PCCC & CNCH','#e67e22')" class="hotline-btn hotline-fire">
+        <button data-action="handleCall" data-args='["114","Cảnh sát PCCC & CNCH","#e67e22"]' class="hotline-btn hotline-fire">
           <span class="hotline-num">114</span>
           <span class="hotline-label">Cứu hỏa</span>
         </button>
-        <button onclick="handleCall('113','Công an địa phương','#2c3e50')" class="hotline-btn hotline-police">
+        <button data-action="handleCall" data-args='["113","Công an địa phương","#2c3e50"]' class="hotline-btn hotline-police">
           <span class="hotline-num">113</span>
           <span class="hotline-label">Công an</span>
         </button>
@@ -131,13 +131,13 @@
       <span class="sos-icon">SOS</span>
     </button>
     <div class="sos-actions" id="sosActions">
-      <button class="sos-action call" onclick="handleCall('112','Tổng đài khẩn cấp quốc gia','#c62828')">
+      <button class="sos-action call" data-action="handleCall" data-args='["112","Tổng đài khẩn cấp quốc gia","#c62828"]'>
         <span>📞</span> Gọi 112
       </button>
-      <button class="sos-action share" onclick="shareLocation()">
+      <button class="sos-action share" data-action="shareLocation" data-args='[]'>
         <span>📍</span> Gửi vị trí
       </button>
-      <button class="sos-action cancel" onclick="toggleSOS()">
+      <button class="sos-action cancel" data-action="toggleSOS" data-args='[]'>
         <span>✕</span> Đóng
       </button>
     </div>
@@ -151,8 +151,8 @@
       <div class="phone-modal-number" id="phoneModalNumber"></div>
       <p class="phone-modal-hint">Thiết bị của bạn không hỗ trợ gọi điện.<br>Sao chép số và gọi bằng điện thoại.</p>
       <div class="phone-modal-actions">
-        <button class="phone-modal-copy" onclick="copyPhoneNumber()">📋 Sao chép số</button>
-        <button class="phone-modal-close" onclick="closePhoneModal()">Đóng</button>
+        <button class="phone-modal-copy" data-action="copyPhoneNumber" data-args='[]'>📋 Sao chép số</button>
+        <button class="phone-modal-close" data-action="closePhoneModal" data-args='[]'>Đóng</button>
       </div>
     </div>
   </div>
@@ -165,49 +165,49 @@
         <p>Chọn đúng loại để lực lượng hỗ trợ phản hồi nhanh nhất</p>
       </div>
       <div class="emergency-types">
-        <button class="emergency-type-btn" data-type="medical" onclick="selectEmergencyType('medical')">
+        <button class="emergency-type-btn" data-type="medical" data-action="selectEmergencyType" data-args='["medical"]'>
           <span class="et-icon">🚑</span>
           <div class="et-text">
             <span class="et-label">Y tế / Cấp cứu</span>
             <span class="et-desc">Đột quỵ, tai nạn, khó thở, chấn thương...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="fire" onclick="selectEmergencyType('fire')">
+        <button class="emergency-type-btn" data-type="fire" data-action="selectEmergencyType" data-args='["fire"]'>
           <span class="et-icon">🚒</span>
           <div class="et-text">
             <span class="et-label">Hỏa hoạn / Cháy nổ</span>
             <span class="et-desc">Cháy nhà, cháy rừng, cháy xe, nổ gas...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="police" onclick="selectEmergencyType('police')">
+        <button class="emergency-type-btn" data-type="police" data-action="selectEmergencyType" data-args='["police"]'>
           <span class="et-icon">👮</span>
           <div class="et-text">
             <span class="et-label">Công an / An ninh</span>
             <span class="et-desc">Trộm cắp, gây rối, cần bảo vệ khẩn cấp...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="traffic" onclick="selectEmergencyType('traffic')">
+        <button class="emergency-type-btn" data-type="traffic" data-action="selectEmergencyType" data-args='["traffic"]'>
           <span class="et-icon">🚗</span>
           <div class="et-text">
             <span class="et-label">Tai nạn giao thông</span>
             <span class="et-desc">Va chạm, ùn tắc, người bị thương trên đường...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="electrical" onclick="selectEmergencyType('electrical')">
+        <button class="emergency-type-btn" data-type="electrical" data-action="selectEmergencyType" data-args='["electrical"]'>
           <span class="et-icon">⚡</span>
           <div class="et-text">
             <span class="et-label">Sự cố điện</span>
             <span class="et-desc">Chập điện, đứt dây điện, cột điện đổ...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="water" onclick="selectEmergencyType('water')">
+        <button class="emergency-type-btn" data-type="water" data-action="selectEmergencyType" data-args='["water"]'>
           <span class="et-icon">💧</span>
           <div class="et-text">
             <span class="et-label">Sự cố nước</span>
             <span class="et-desc">Vỡ ống nước, ngập lụt, rò rỉ nghiêm trọng...</span>
           </div>
         </button>
-        <button class="emergency-type-btn" data-type="other" onclick="selectEmergencyType('other')">
+        <button class="emergency-type-btn" data-type="other" data-action="selectEmergencyType" data-args='["other"]'>
           <span class="et-icon">🆘</span>
           <div class="et-text">
             <span class="et-label">Sự cố khác</span>
@@ -215,7 +215,7 @@
           </div>
         </button>
       </div>
-      <button class="emergency-modal-close-btn" onclick="closeEmergencyModal()">✕ Đóng</button>
+      <button class="emergency-modal-close-btn" data-action="closeEmergencyModal" data-args='[]'>✕ Đóng</button>
     </div>
   </div>
 
@@ -226,7 +226,7 @@
 
   <!-- Chat AI Floating Button -->
   <div class="chat-container" id="chatContainer">
-    <button class="chat-btn" id="chatBtn" title="Trợ lý AI – Hỏi về sơ cứu, an toàn" onclick="toggleChat()">
+    <button class="chat-btn" id="chatBtn" title="Trợ lý AI – Hỏi về sơ cứu, an toàn" data-action="toggleChat" data-args='[]'>
       <span class="chat-btn-icon">💬</span>
     </button>
     <div class="chat-panel" id="chatPanel">
@@ -235,15 +235,15 @@
           <span class="chat-header-icon">🤖</span>
           <strong>Trợ lý SafeQR</strong>
         </div>
-        <button class="chat-close" onclick="toggleChat()">✕</button>
+        <button class="chat-close" data-action="toggleChat" data-args='[]'>✕</button>
       </div>
       <div class="chat-suggestions" id="chatSuggestions">
-        <button class="chat-chip" onclick="sendChatChip('Cách sơ cứu khi bị bỏng?')">🔥 Sơ cứu bỏng</button>
-        <button class="chat-chip" onclick="sendChatChip('Cần làm gì khi có cháy trong nhà?')">🚒 Thoát hiểm khi cháy</button>
-        <button class="chat-chip" onclick="sendChatChip('Dấu hiệu và sơ cứu đột quỵ?')">🧠 Sơ cứu đột quỵ</button>
-        <button class="chat-chip" onclick="sendChatChip('Sơ cứu tai nạn giao thông?')">🚗 Tai nạn giao thông</button>
-        <button class="chat-chip" onclick="sendChatChip('Hô hấp nhân tạo CPR thế nào?')">❤️ Cách CPR</button>
-        <button class="chat-chip" onclick="sendChatChip('Sơ cứu khi bị điện giật?')">⚡ Sơ cứu điện giật</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Cách sơ cứu khi bị bỏng?"]'>🔥 Sơ cứu bỏng</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Cần làm gì khi có cháy trong nhà?"]'>🚒 Thoát hiểm khi cháy</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Dấu hiệu và sơ cứu đột quỵ?"]'>🧠 Sơ cứu đột quỵ</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Sơ cứu tai nạn giao thông?"]'>🚗 Tai nạn giao thông</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Hô hấp nhân tạo CPR thế nào?"]'>❤️ Cách CPR</button>
+        <button class="chat-chip" data-action="sendChatChip" data-args='["Sơ cứu khi bị điện giật?"]'>⚡ Sơ cứu điện giật</button>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-msg ai">
@@ -251,8 +251,8 @@
         </div>
       </div>
       <div class="chat-input-area">
-        <input type="text" class="chat-input" id="chatInput" placeholder="Nhập câu hỏi về sơ cứu, an toàn..." onkeydown="if(event.key==='Enter')sendChat()">
-        <button class="chat-send" onclick="sendChat()">➤</button>
+        <input type="text" class="chat-input" id="chatInput" placeholder="Nhập câu hỏi về sơ cứu, an toàn...">
+        <button class="chat-send" data-action="sendChat" data-args='[]'>➤</button>
       </div>
     </div>
   </div>

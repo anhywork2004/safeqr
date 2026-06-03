@@ -1,6 +1,19 @@
 // ============================================================
 // SafeQR – Admin Dashboard (Locality-based, multi-contact)
 // ============================================================
+
+// ─── Event delegation for CSP compliance (no unsafe-inline) ──
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  var action = el.getAttribute('data-action');
+  var args = [];
+  try { args = JSON.parse(el.getAttribute('data-args') || '[]'); } catch(ex) {}
+  if (typeof window[action] === 'function') {
+    window[action].apply(null, args);
+  }
+});
+
 var SESSION_KEY = 'safeqr_session';
 var CONTACTS_KEY = 'safeqr_contacts';
 var PASSWORDS_KEY = 'safeqr_passwords';

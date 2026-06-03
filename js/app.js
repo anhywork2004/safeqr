@@ -12,6 +12,20 @@ var _localContactsCache = null;
 var _userLocation = null;      // { lat, lng, accuracy, address, timestamp }
 var _geoPending = false;
 
+// ============================================================
+// EVENT DELEGATION — Replaces inline onclick for CSP compliance
+// ============================================================
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  var action = el.getAttribute('data-action');
+  var args = [];
+  try { args = JSON.parse(el.getAttribute('data-args') || '[]'); } catch(ex) {}
+  if (typeof window[action] === 'function') {
+    window[action].apply(null, args);
+  }
+});
+
 /**
  * Convert GPS coordinates to a human-readable address.
  * Uses Nominatim (OpenStreetMap) — FREE, no API key, supports tiếng Việt.
@@ -287,6 +301,8 @@ function updateHeroLocality(address) {
 
   if (locality && locality.length > 3) {
     localityEl.textContent = locality;
+    // Also try to match this locality to load local contacts
+    matchAndLoadLocalContacts(address);
   }
 }
 
@@ -436,29 +452,110 @@ function getMaxCols() {
   return 4;
 }
 
-function renderCards() {
-  var contacts = getMergedContacts();
-  var grid = document.getElementById('cardGrid');
-  var total = contacts.length;
-  var maxCols = getMaxCols();
-  var cols = calcColumns(total, maxCols);
+/**
+ * Get global-only contacts (locality_id is null/undefined).
+ */
+function getGlobalContacts() {
+  var all = getMergedContacts();
+  return all.filter(function(c) { return !c.locality_id; });
+}
 
-  // Dynamically set grid columns
-  grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+/**
+ * Get local contacts for the matched locality.
+ */
+function getLocalContactsForDisplay() {
+  if (_localContactsCache && _localContactsCache.length > 0) return _localContactsCache;
+  if (!_matchedLocalityId) return [];
+  var all = getMergedContacts();
+  return all.filter(function(c) { return c.locality_id === _matchedLocalityId; });
+}
 
-  grid.innerHTML = contacts.map(function (c) {
-    return '<div class="card" style="--card-color: ' + c.color + '">' +
-      '<div class="card-icon">' + c.icon + '</div>' +
-      '<div class="card-name">' + c.name + '</div>' +
-      '<div class="card-desc">' + c.description + '</div>' +
-      '<div class="card-phone">' + escapeHtml(c.phone) + '</div>' +
-      '<div class="card-address" title="' + escapeHtml(c.address) + '">' + escapeHtml(c.address) + '</div>' +
-      '<div class="card-actions">' +
-        '<button class="btn btn-call" onclick="handleCall(\'' + escapeHtml(c.phone) + '\',\'' + escapeHtml(c.name) + '\',\'' + c.color + '\')">📞 Gọi</button>' +
-        '<button class="btn btn-maps" onclick="openMaps(\'' + escapeHtml(c.mapsQuery) + '\')">🗺 Chỉ đường</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+function renderCardHTML(c) {
+  return '<div class="card" style="--card-color: ' + c.color + '">' +
+    '<div class="card-icon">' + c.icon + '</div>' +
+    '<div class="card-name">' + escapeHtml(c.name) + '</div>' +
+    '<div class="card-desc">' + escapeHtml(c.description || '') + '</div>' +
+    '<div class="card-phone">' + escapeHtml(c.phone) + '</div>' +
+    '<div class="card-address" title="' + escapeHtml(c.address || '') + '">' + escapeHtml(c.address || '') + '</div>' +
+    '<div class="card-actions">' +
+      '<button class="btn btn-call" data-action="handleCall" data-args=\'["' + c.phone.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '","' + c.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '","' + (c.color || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]\'>📞 Gọi</button>' +
+      '<button class="btn btn-maps" data-action="openMaps" data-args=\'["' + (c.mapsQuery || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]\'>🗺 Chỉ đường</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderAllCards() {
+  var mainContent = document.getElementById('main');
+  var globalContacts = getGlobalContacts();
+  var localContacts = getLocalContactsForDisplay();
+  var html = '';
+
+  // Global section
+  html += '<div class="section-header"><h3>🚨 Khẩn cấp toàn quốc</h3><p>Luôn sẵn sàng — gọi ngay khi cần</p></div>';
+  html += '<div class="card-grid" id="cardGridGlobal">' + globalContacts.map(renderCardHTML).join('') + '</div>';
+
+  // Local section
+  html += '<div class="local-section" id="localSection">';
+  if (_matchedLocalityId && localContacts.length > 0) {
+    html += '<div class="section-divider"></div>';
+    html += '<div class="section-header"><h3>📍 Tại địa phương bạn</h3><p>Liên hệ khẩn cấp gần bạn — cập nhật bởi chính quyền địa phương</p></div>';
+    html += '<div class="card-grid" id="cardGridLocal">' + localContacts.map(renderCardHTML).join('') + '</div>';
+  } else if (_matchedLocalityId) {
+    html += '<div class="section-divider"></div>';
+    html += '<div class="section-header"><h3>📍 Tại địa phương bạn</h3><p style="color:var(--text-muted);">Địa phương bạn chưa có dữ liệu. Các số toàn quốc vẫn sẵn sàng.</p></div>';
+  } else {
+    html += '<div class="section-divider"></div>';
+    html += '<div class="section-header"><h3>📍 Tại địa phương bạn</h3><p style="color:var(--text-muted);">Đang xác định vị trí để hiển thị liên hệ địa phương...</p></div>';
+  }
+  html += '</div>';
+
+  mainContent.innerHTML = html;
+}
+
+/**
+ * Match GPS address to a locality from the API and load its local contacts.
+ */
+async function matchAndLoadLocalContacts(address) {
+  if (!address) return;
+  try {
+    // Fetch localities list
+    var localities = await apiGetLocalities();
+    if (!localities || !localities.length) return;
+
+    // Try to match address parts to locality names
+    var addrLower = address.toLowerCase();
+    var bestMatch = null;
+    for (var i = 0; i < localities.length; i++) {
+      var loc = localities[i];
+      var locLower = (loc.name || '').toLowerCase();
+      // Remove "phường ", "xã ", "p. " prefix for matching
+      var locShort = locLower.replace(/^(phường|xã|p\.|thị trấn)\s+/, '').trim();
+      if (locShort && addrLower.indexOf(locShort) >= 0) {
+        bestMatch = loc;
+        break;
+      }
+      // Also try matching full name
+      if (locLower && addrLower.indexOf(locLower) >= 0) {
+        bestMatch = loc;
+        break;
+      }
+    }
+
+    if (bestMatch && bestMatch.id !== _matchedLocalityId) {
+      _matchedLocalityId = bestMatch.id;
+      // Fetch contacts for this locality
+      var contacts = await apiGetContacts(bestMatch.id);
+      if (contacts && contacts.length > 0) {
+        _localContactsCache = contacts.filter(function(c) {
+          return c.locality_id === bestMatch.id;
+        });
+      }
+      // Re-render
+      renderAllCards();
+    }
+  } catch(e) {
+    console.warn('[Locality] Match failed:', e.message);
+  }
 }
 
 function renderExtraNumbers() {
@@ -466,7 +563,7 @@ function renderExtraNumbers() {
   list.innerHTML = externalEmergencyNumbers.map(function (n) {
     return '<li>' +
       '<span class="extra-name">' + escapeHtml(n.name) + '</span>' +
-      '<button class="extra-phone" onclick="handleCall(\'' + escapeHtml(n.phone) + '\',\'' + escapeHtml(n.name) + '\',\'#c62828\')">' + escapeHtml(n.phone) + '</button>' +
+      '<button class="extra-phone" data-action="handleCall" data-args=\'["' + n.phone.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '","' + n.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '","#c62828"]\'>' + escapeHtml(n.phone) + '</button>' +
     '</li>';
   }).join('');
 }
@@ -1034,6 +1131,14 @@ function setupSOS() {
       panel.classList.remove('visible');
     }
   });
+
+  // Chat input Enter key handler (replaces inline onkeydown)
+  var chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendChat();
+    });
+  }
 }
 
 // ========== CHAT AI ==========

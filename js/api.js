@@ -69,9 +69,13 @@ function apiClearToken() {
  * Fetch all contacts from API.
  * Returns null on failure (caller should use fallback data).
  */
-async function apiGetContacts() {
+async function apiGetContacts(locality) {
   var url = apiUrl('/api/contacts');
   if (!url) return null;
+
+  if (locality) {
+    url += '?locality=' + encodeURIComponent(locality);
+  }
 
   try {
     var res = await fetch(url);
